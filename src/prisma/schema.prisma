@@ -1,0 +1,371 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums for better type safety
+enum UserRole {
+  ADMIN
+  USER
+  READONLY
+  MODERATOR
+}
+
+enum MaterialStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  RETIRED
+  DAMAGED
+  LOST
+}
+
+enum MissionStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+// 1. GP table
+model GP {
+  id        Int      @id @default(autoincrement()) @map("ID")
+  nom       String   @db.VarChar(255)
+  desc      String?  @db.Text
+  perms     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users Users[]
+
+  @@map("GP")
+}
+
+// 2. Users table
+model Users {
+  id        Int       @id @default(autoincrement()) @map("ID")
+  gpId      Int       @map("GP_ID")
+  username  String    @unique @db.VarChar(100)
+  name      String    @db.VarChar(255)
+  hash      String    @db.VarChar(255)
+  MFA       Boolean   @default(false)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  lastLogin DateTime? @map("last_login")
+
+  // Relations
+  gp       GP         @relation(fields: [gpId], references: [id])
+  logMatos LogMatos[]
+  logAdmin LogAdmin[]
+
+  @@index([gpId])
+  @@index([name])
+  @@map("users")
+}
+
+// 3. Weapon Type table
+model WeaponType {
+  id      Int     @id @default(autoincrement()) @map("ID")
+  name    String  @db.VarChar(255)
+  desc    String? @db.Text
+  type    String? @db.VarChar(100)
+  calibre String? @db.VarChar(50)
+  canon   String? @db.VarChar(100)
+  brand   String? @db.VarChar(100)
+
+  // Relations
+  weapons Weapon[]
+
+  @@map("weapon_type")
+}
+
+// 4. Weapon table
+model Weapon {
+  id             Int       @id @default(autoincrement()) @map("ID")
+  idWeaponType   Int       @map("ID_weapon_type")
+  idLocalisation Int       @map("ID_localisation")
+  entryDate      DateTime  @map("entry_date")
+  SN             String    @unique @db.VarChar(100)
+  status         String    @db.VarChar(50)
+  dateCreation   DateTime  @map("date_creation")
+  lastRevision   DateTime? @map("last_revision")
+  nextRevision   DateTime? @map("next_revision")
+
+  // Relations
+  weaponType   WeaponType   @relation(fields: [idWeaponType], references: [id])
+  localisation Localisation @relation(fields: [idLocalisation], references: [id])
+
+  @@index([idWeaponType])
+  @@index([idLocalisation])
+  @@index([status])
+  @@index([nextRevision])
+  @@map("weapon")
+}
+
+// 5. Missions table
+model Missions {
+  id             Int      @id @default(autoincrement()) @map("ID")
+  name           String   @db.VarChar(255)
+  desc           String?  @db.Text
+  status         String   @db.VarChar(50)
+  theatre        String?  @db.VarChar(255)
+  dateBeginning  DateTime @map("date_beginning")
+  dateEnd        DateTime @map("date_end")
+  missionHistory String?  @map("mission_history") @db.Text
+  creatorName    String   @map("creator_name") @db.VarChar(255)
+  creatorId      Int?     @map("creator_id")
+
+  // Relations
+  missionMatos MM[]
+
+  @@index([status])
+  @@index([dateBeginning])
+  @@index([dateEnd])
+  @@index([creatorId])
+  @@map("missions")
+}
+
+// 6. MM (Mission-Material) table
+model MM {
+  id        Int @id @default(autoincrement()) @map("ID")
+  idMission Int @map("ID_mission")
+  idMatos   Int @map("ID_matos")
+
+  // Relations
+  mission Missions @relation(fields: [idMission], references: [id])
+  matos   Matos    @relation(fields: [idMatos], references: [id])
+
+  @@map("M_M")
+}
+
+// 7. MRE Type table
+model MREType {
+  id         Int     @id @default(autoincrement()) @map("ID")
+  name       String  @db.VarChar(255)
+  desc       String? @db.Text
+  type       String? @db.VarChar(100)
+  halal      Boolean @default(false)
+  veg        Boolean @default(false)
+  allergenes String? @db.Text
+  confu      String? @db.Text
+
+  // Relations
+  mre MRE[]
+
+  @@map("MRE_type")
+}
+
+// 8. MRE table
+model MRE {
+  id               Int       @id @default(autoincrement()) @map("ID")
+  idMREType        Int       @map("ID_MRE_type")
+  idLocalisation   Int       @map("ID_localisation")
+  entryDate        DateTime  @map("entry_date")
+  storageCondition String?   @map("storage_condition") @db.VarChar(255)
+  perceptionDate   DateTime? @map("perception_date")
+  status           String    @db.VarChar(50)
+
+  // Relations
+  mreType      MREType      @relation(fields: [idMREType], references: [id])
+  localisation Localisation @relation(fields: [idLocalisation], references: [id])
+
+  @@map("MRE")
+}
+
+// 9. Matos (central material table)
+model Matos {
+  id        Int  @id @default(autoincrement()) @map("ID")
+  idWeapon  Int? @map("ID_weapon")
+  idMRE     Int? @map("ID_MRE")
+  idAmmo    Int? @map("ID_ammo")
+  idVehicle Int? @map("ID_vehicle")
+  idPP      Int? @map("ID_PP")
+
+  // Relations
+  missionMatos MM[]
+  logMatos     LogMatos[]
+
+  @@map("matos")
+}
+
+// 10. Log Matos table
+model LogMatos {
+  id          Int      @id @default(autoincrement()) @map("ID")
+  idMatos     Int      @map("ID_matos")
+  idUser      Int      @map("ID_user")
+  action      String   @db.VarChar(100)
+  description String?  @db.Text
+  date        DateTime
+
+  // Relations
+  user  Users @relation(fields: [idUser], references: [id])
+  matos Matos @relation(fields: [idMatos], references: [id])
+
+  @@map("log_matos")
+}
+
+// 11. Ammo Type table
+model AmmoType {
+  id            Int     @id @default(autoincrement()) @map("ID")
+  name          String  @db.VarChar(255)
+  desc          String? @db.Text
+  type          String? @db.VarChar(100)
+  calibre       String? @db.VarChar(50)
+  ball          String? @db.VarChar(100)
+  explosiveType String? @map("explosive_type") @db.VarChar(100)
+  brand         String? @db.VarChar(100)
+
+  // Relations
+  ammo Ammo[]
+
+  @@map("ammo_type")
+}
+
+// 12. Ammo table
+model Ammo {
+  id               Int       @id @default(autoincrement()) @map("ID")
+  idAmmoType       Int       @map("ID_ammo_type")
+  idLocalisation   Int       @map("ID_localisation")
+  entryDate        DateTime  @map("entry_date")
+  quatitiy         Int
+  storageCondition String?   @map("storage_condition") @db.VarChar(255)
+  creationDate     DateTime  @map("creation_date")
+  perceptionDate   DateTime? @map("perception_date")
+  status           String    @db.VarChar(50)
+
+  // Relations
+  ammoType     AmmoType     @relation(fields: [idAmmoType], references: [id])
+  localisation Localisation @relation(fields: [idLocalisation], references: [id])
+
+  @@map("ammo")
+}
+
+// 13. Vehicles Type table
+model VehiclesType {
+  id        Int     @id @default(autoincrement()) @map("ID")
+  name      String  @db.VarChar(255)
+  desc      String? @db.Text
+  model     String? @db.VarChar(100)
+  brand     String? @db.VarChar(100)
+  type      String? @db.VarChar(100)
+  carburant String? @db.VarChar(50)
+
+  // Relations
+  vehicles Vehicles[]
+
+  @@map("vehicles_type")
+}
+
+// 14. Vehicles table
+model Vehicles {
+  id              Int       @id @default(autoincrement()) @map("ID")
+  idVehicleType   Int       @map("ID_vehicle_type")
+  idLocalisation  Int       @map("ID_localisation")
+  entryDate       DateTime  @map("entry_date")
+  noChassis       String    @unique @map("no_chassis") @db.VarChar(100)
+  plate           String    @unique @db.VarChar(20)
+  status          String    @db.VarChar(50)
+  kilemetrage     Int?      @default(0)
+  lastMaintenance DateTime? @map("last_maintenance")
+  nextMaintenance DateTime? @map("next_maintenance")
+
+  // Relations
+  vehicleType     VehiclesType      @relation(fields: [idVehicleType], references: [id])
+  localisation    Localisation      @relation(fields: [idLocalisation], references: [id])
+  vehiclesHistory VehiclesHistory[]
+
+  @@map("vehicles")
+}
+
+// 15. Vehicles History table
+model VehiclesHistory {
+  id         Int      @id @default(autoincrement()) @map("ID")
+  idVehicles Int      @map("ID_vehicles")
+  date       DateTime
+  location   String   @db.VarChar(255)
+  desc       String?  @db.Text
+  cost       Decimal? @db.Decimal(10, 2)
+
+  // Relations
+  vehicle Vehicles @relation(fields: [idVehicles], references: [id])
+
+  @@map("vehicles_history")
+}
+
+// 16. Localisation table
+model Localisation {
+  id       Int     @id @default(autoincrement()) @map("ID")
+  building String? @db.VarChar(255)
+  room     String? @db.VarChar(100)
+  section  String? @db.VarChar(100)
+
+  // Relations
+  weapons  Weapon[]
+  ammo     Ammo[]
+  vehicles Vehicles[]
+  mre      MRE[]
+  pp       PP[]
+
+  @@map("localisation")
+}
+
+// 17. Log Admin table
+model LogAdmin {
+  id           Int      @id @default(autoincrement()) @map("ID")
+  idUser       Int      @map("ID_user")
+  idTargetUser Int?     @map("ID_target_user")
+  action       String   @db.VarChar(100)
+  description  String?  @db.Text
+  date         DateTime
+
+  // Relations
+  user Users @relation(fields: [idUser], references: [id])
+
+  @@map("log_admin")
+}
+
+// 18. PP table
+model PP {
+  id               Int       @id @default(autoincrement()) @map("ID")
+  idPPType         Int       @map("ID_PP_type")
+  idLocalisation   Int       @map("ID_localisation")
+  entryDate        DateTime  @map("entry_date")
+  size             String?   @db.VarChar(50)
+  storageCondition String?   @map("storage_condition") @db.VarChar(255)
+  creationDate     DateTime  @map("creation_date")
+  perceptionDate   DateTime? @map("perception_date")
+  status           String    @db.VarChar(50)
+
+  // Relations
+  ppType       PPType       @relation(fields: [idPPType], references: [id])
+  localisation Localisation @relation(fields: [idLocalisation], references: [id])
+
+  @@map("PP")
+}
+
+// 19. PP Type table  
+model PPType {
+  id                    Int      @id @default(autoincrement()) @map("ID")
+  entryDate             DateTime @map("entry_date")
+  name                  String   @db.VarChar(255)
+  brand                 String?  @db.VarChar(100)
+  type                  String?  @db.VarChar(100)
+  mandatory             Boolean  @default(false)
+  plateTypes            String?  @map("plate_types") @db.Text
+  integratedArmor       String?  @map("integrated_armor") @db.Text
+  normalsCertifications String?  @map("norms_certifications") @db.Text
+
+  // Relations
+  pp PP[]
+
+  @@map("PP_type")
+}
