@@ -1,0 +1,174 @@
+CREATE TABLE IF NOT EXISTS `assets` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'vehicle no 45, 12th HK 416...',
+	`added_by_id` INTEGER NOT NULL,
+	`type_asset_id` TINYINT NOT NULL,
+	`mission_id` INTEGER COMMENT 'no assigned mission if value not assigned',
+	`room_id` INTEGER,
+	`DA` DATETIME NOT NULL,
+	`DE` DATETIME NOT NULL,
+	`nom` TEXT NOT NULL COMMENT 'SN, PN, chassi no...',
+	`number` TEXT COMMENT 'MRE number 3574
+may not be necessary',
+	`status` TEXT NOT NULL,
+	`exists` BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'discarded, destroyed, sold, or in stock',
+	`shelf` TEXT COMMENT 'shelf no 355',
+	PRIMARY KEY(`id`)
+) COMMENT='in mission, on repair, available...';
+
+
+CREATE TABLE IF NOT EXISTS `asset_type` (
+	`id` TINYINT NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'vehicle, MRE, weapon...',
+	`type` TEXT NOT NULL COMMENT 'vehicle, MRE, weapon...',
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `specs` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'specs #7 = how much km a car has',
+	`type_id` TINYINT NOT NULL,
+	`name` TEXT NOT NULL COMMENT 'km, expiration date, bullet...',
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `value` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'link between spec and asset by adding value : 3rd car''''s kilometers : 400000km',
+	`asset_id` INTEGER NOT NULL,
+	`spec_id` INTEGER NOT NULL,
+	`DA` DATETIME NOT NULL,
+	`DE` DATETIME NOT NULL,
+	`value` TEXT NOT NULL COMMENT '25000Km, m855 ball point...',
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `users` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`group_id` TINYINT NOT NULL,
+	`DA` DATETIME NOT NULL,
+	`DE` DATETIME NOT NULL,
+	`active` BOOLEAN NOT NULL DEFAULT TRUE,
+	`username` TEXT(100) NOT NULL UNIQUE,
+	`name` TEXT,
+	`hash` TEXT NOT NULL COMMENT '1945B09A02C889190B3',
+	`hash_algorithm` TEXT NOT NULL COMMENT 'algo_rounds
+ARGON2_32',
+	`MFA` TEXT COMMENT 'seed of MFA',
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `group` (
+	`id` TINYINT NOT NULL AUTO_INCREMENT UNIQUE,
+	`name` TEXT NOT NULL COMMENT 'admin, user',
+	`desc` TEXT,
+	`perms` TEXT NOT NULL,
+	PRIMARY KEY(`id`)
+) COMMENT='admin, user, viewer, technician';
+
+
+CREATE TABLE IF NOT EXISTS `log_admin` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`admin_id` INTEGER NOT NULL,
+	`user_id` INTEGER,
+	`D` DATETIME NOT NULL,
+	`action` TEXT NOT NULL COMMENT 'renamed john to martha',
+	`desc` TEXT,
+	PRIMARY KEY(`id`)
+) COMMENT='separated admin logs for added security, when user (user_id) are edited/added... or when app settings are changed';
+
+
+CREATE TABLE IF NOT EXISTS `log` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`asset_id` INTEGER NOT NULL,
+	`D` DATETIME NOT NULL,
+	`action` TEXT NOT NULL COMMENT 'added car #3
+changed bullet 7''''s grammage value',
+	`old_value` TEXT NOT NULL,
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `mission` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`created_by_id` INTEGER NOT NULL,
+	`DA` DATETIME NOT NULL,
+	`DE` DATETIME NOT NULL,
+	`date_start` DATETIME,
+	`date_end` DATETIME,
+	`title` TEXT NOT NULL,
+	`desc` TEXT,
+	`status` TEXT NOT NULL COMMENT 'finished, planned...',
+	`theatre` TEXT NOT NULL COMMENT 'location',
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `log_mission` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`mission_id` INTEGER NOT NULL,
+	`D` DATETIME NOT NULL,
+	`action` TEXT NOT NULL COMMENT 'changed date, removed description of mission...',
+	`old_value` TEXT NOT NULL,
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `room` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`building` INTEGER NOT NULL,
+	`room` TEXT NOT NULL COMMENT 'Paris',
+	PRIMARY KEY(`id`)
+);
+
+
+CREATE TABLE IF NOT EXISTS `base` (
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
+	`name` TEXT NOT NULL,
+	`address` TEXT NOT NULL,
+	PRIMARY KEY(`id`)
+);
+
+
+ALTER TABLE `assets`
+ADD FOREIGN KEY(`type_asset_id`) REFERENCES `asset_type`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `value`
+ADD FOREIGN KEY(`asset_id`) REFERENCES `assets`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `specs`
+ADD FOREIGN KEY(`id`) REFERENCES `value`(`spec_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `asset_type`
+ADD FOREIGN KEY(`id`) REFERENCES `specs`(`type_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `users`
+ADD FOREIGN KEY(`id`) REFERENCES `assets`(`added_by_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `group`
+ADD FOREIGN KEY(`id`) REFERENCES `users`(`group_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `log_admin`
+ADD FOREIGN KEY(`id`) REFERENCES `users`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `log_admin`
+ADD FOREIGN KEY(`admin_id`) REFERENCES `users`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `log`
+ADD FOREIGN KEY(`asset_id`) REFERENCES `assets`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `log_mission`
+ADD FOREIGN KEY(`mission_id`) REFERENCES `mission`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `assets`
+ADD FOREIGN KEY(`mission_id`) REFERENCES `mission`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `mission`
+ADD FOREIGN KEY(`created_by_id`) REFERENCES `users`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `room`
+ADD FOREIGN KEY(`id`) REFERENCES `assets`(`room_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `base`
+ADD FOREIGN KEY(`id`) REFERENCES `room`(`building`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
