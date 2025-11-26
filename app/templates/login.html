@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion - SGLM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1>SGLM</h1>
+                <p>Système de Gestion Logistique Militaire</p>
+            </div>
+
+            <div id="error-container"></div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username" class="form-label">Nom d'utilisateur</label>
+                    <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        class="form-input"
+                        required
+                        autocomplete="username"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Mot de passe</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="form-input"
+                        required
+                        autocomplete="current-password"
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="loginBtn">
+                    Se connecter
+                </button>
+            </form>
+
+            <div class="mt-3 text-center">
+                <p style="font-size: 0.875rem; color: #6c757d;">
+                    Version 1.0.0 - Tous droits réservés
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            loginBtn.textContent = 'Connexion en cours...';
+            loginBtn.disabled = true;
+
+            try {
+                const response = await api.login(username, password);
+
+                if (response.mfa_required) {
+                    // Rediriger vers la page MFA
+                    showError('MFA non encore implémenté dans le frontend');
+                } else {
+                    // Connexion réussie
+                    window.location.href = '/dashboard';
+                }
+            } catch (error) {
+                showError(error.message || 'Erreur de connexion');
+                loginBtn.textContent = 'Se connecter';
+                loginBtn.disabled = false;
+            }
+        });
+
+        // Rediriger si déjà connecté
+        if (TokenManager.isAuthenticated()) {
+            window.location.href = '/dashboard';
+        }
+    </script>
+</body>
+</html>

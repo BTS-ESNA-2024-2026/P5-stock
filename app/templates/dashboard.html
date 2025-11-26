@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SGLM</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>SGLM</h2>
+                <p>Logistique Militaire</p>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item active">
+                    <span>📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/assets" class="nav-item">
+                    <span>📦</span>
+                    <span>Assets</span>
+                </a>
+                <a href="/missions" class="nav-item">
+                    <span>🎯</span>
+                    <span>Missions</span>
+                </a>
+                <a href="/users" class="nav-item">
+                    <span>👥</span>
+                    <span>Utilisateurs</span>
+                </a>
+                <a href="/reports" class="nav-item">
+                    <span>📈</span>
+                    <span>Rapports</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <div>
+                        <div id="userName" style="font-weight: bold; margin-bottom: 2px;">Admin</div>
+                        <div id="userRole" style="font-size: 0.75rem; opacity: 0.8;">ADMIN</div>
+                    </div>
+                </div>
+                <button class="btn btn-danger btn-sm" style="width: 100%;" onclick="logout()">
+                    Déconnexion
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">Tableau de Bord</h1>
+                <button class="btn btn-primary btn-sm" onclick="loadDashboard()">
+                    🔄 Actualiser
+                </button>
+            </div>
+
+            <div id="error-container"></div>
+            <div id="success-container"></div>
+
+            <!-- Stats Cards -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="data-table">
+                <div class="table-header">
+                    <h3>Activité Récente</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityTable">
+                        <tr>
+                            <td colspan="3" class="text-center">
+                                <div class="spinner"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    <script>
+        // Vérifier l'authentification
+        if (!TokenManager.isAuthenticated()) {
+            window.location.href = '/login';
+        }
+
+        // Afficher les infos utilisateur
+        const user = TokenManager.getUser();
+        if (user) {
+            document.getElementById('userName').textContent = user.name || user.username;
+            document.getElementById('userRole').textContent = user.role;
+            document.getElementById('userAvatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+        }
+
+        // Fonction de déconnexion
+        async function logout() {
+            if (confirm('Voulez-vous vraiment vous déconnecter ?')) {
+                await api.logout();
+            }
+        }
+
+        // Charger le dashboard
+        async function loadDashboard() {
+            try {
+                const data = await api.getDashboard();
+                displayDashboard(data.dashboard);
+            } catch (error) {
+                showError('Erreur lors du chargement du dashboard: ' + error.message);
+            }
+        }
+
+        function displayDashboard(dashboard) {
+            // Afficher les statistiques des assets
+            const statsGrid = document.getElementById('statsGrid');
+            let statsHTML = '';
+
+            // Total des missions
+            const totalMissions = dashboard.missions.active + dashboard.missions.planned;
+            statsHTML += `
+                <div class="stat-card success">
+                    <h3>Missions Actives</h3>
+                    <div class="stat-value">${dashboard.missions.active}</div>
+                </div>
+                <div class="stat-card warning">
+                    <h3>Missions Planifiées</h3>
+                    <div class="stat-value">${dashboard.missions.planned}</div>
+                </div>
+            `;
+
+            // Stats par type d'asset
+            dashboard.assets.forEach(asset => {
+                const color = asset.availability_rate >= 80 ? 'success' :
+                             asset.availability_rate >= 50 ? 'warning' : 'danger';
+
+                statsHTML += `
+                    <div class="stat-card ${color}">
+                        <h3>${asset.type}</h3>
+                        <div class="stat-value">${asset.available}/${asset.total}</div>
+                        <div style="font-size: 0.875rem; margin-top: 0.5rem;">
+                            Disponibilité: ${asset.availability_rate}%
+                        </div>
+                    </div>
+                `;
+            });
+
+            statsGrid.innerHTML = statsHTML;
+
+            // Afficher l'activité récente
+            const activityTable = document.getElementById('activityTable');
+            if (dashboard.recent_activity && dashboard.recent_activity.length > 0) {
+                activityTable.innerHTML = dashboard.recent_activity.map(activity => `
+                    <tr>
+                        <td>${formatDate(activity.date)}</td>
+                        <td><span class="badge badge-info">${activity.action}</span></td>
+                        <td>${activity.description}</td>
+                    </tr>
+                `).join('');
+            } else {
+                activityTable.innerHTML = `
+                    <tr>
+                        <td colspan="3" class="text-center">Aucune activité récente</td>
+                    </tr>
+                `;
+            }
+        }
+
+        // Charger au démarrage
+        loadDashboard();
+
+        // Auto-refresh toutes les 30 secondes
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>
