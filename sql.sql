@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS `assets` (
 	`number` TEXT COMMENT 'MRE number 3574
 may not be necessary',
 	`status` TEXT NOT NULL,
-	`exists` BOOLEAN NOT NULL DEFAULT TRUE COMMENT 'discarded, destroyed, sold, or in stock',
+	`exists` BOOLEAN NOT NULL DEFAULT true COMMENT 'discarded, destroyed, sold, or in stock',
 	`shelf` TEXT COMMENT 'shelf no 355',
 	PRIMARY KEY(`id`)
 ) COMMENT='in mission, on repair, available...';
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `specs` (
 
 
 CREATE TABLE IF NOT EXISTS `value` (
-	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'link between spec and asset by adding value : 3rd car''''s kilometers : 400000km',
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'link between spec and asset by adding value : 3rd car''''''''s kilometers : 400000km',
 	`asset_id` INTEGER NOT NULL,
 	`spec_id` INTEGER NOT NULL,
 	`DA` DATETIME NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 	`group_id` TINYINT NOT NULL,
 	`DA` DATETIME NOT NULL,
 	`DE` DATETIME NOT NULL,
-	`active` BOOLEAN NOT NULL DEFAULT TRUE,
+	`active` BOOLEAN NOT NULL DEFAULT true,
 	`username` VARCHAR(100) NOT NULL UNIQUE,
 	`name` TEXT,
 	`hash` TEXT NOT NULL COMMENT '1945B09A02C889190B3',
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `log` (
 	`asset_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` TEXT NOT NULL COMMENT 'added car #3
-changed bullet 7''''s grammage value',
+changed bullet 7''''''''s grammage value',
 	`old_value` TEXT NOT NULL,
 	PRIMARY KEY(`id`)
 );
@@ -136,20 +136,14 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `value`
 ADD FOREIGN KEY(`asset_id`) REFERENCES `assets`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `specs`
-ADD FOREIGN KEY(`id`) REFERENCES `value`(`spec_id`)
+ALTER TABLE `value`
+ADD FOREIGN KEY(`spec_id`) REFERENCES `specs`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `asset_type`
 ADD FOREIGN KEY(`id`) REFERENCES `specs`(`type_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `users`
-ADD FOREIGN KEY(`id`) REFERENCES `assets`(`added_by_id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `group`
-ADD FOREIGN KEY(`id`) REFERENCES `users`(`group_id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log_admin`
-ADD FOREIGN KEY(`id`) REFERENCES `users`(`id`)
+ADD FOREIGN KEY(`user_id`) REFERENCES `users`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log_admin`
 ADD FOREIGN KEY(`admin_id`) REFERENCES `users`(`id`)
@@ -166,9 +160,15 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `mission`
 ADD FOREIGN KEY(`created_by_id`) REFERENCES `users`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `room`
-ADD FOREIGN KEY(`id`) REFERENCES `assets`(`room_id`)
+ALTER TABLE `assets`
+ADD FOREIGN KEY(`room_id`) REFERENCES `room`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `base`
-ADD FOREIGN KEY(`id`) REFERENCES `room`(`building`)
+ALTER TABLE `room`
+ADD FOREIGN KEY(`building`) REFERENCES `base`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `users`
+ADD FOREIGN KEY(`id`) REFERENCES `assets`(`added_by_id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `group`
+ADD FOREIGN KEY(`id`) REFERENCES `users`(`group_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
