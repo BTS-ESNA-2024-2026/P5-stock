@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PSTOCK</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <div class="shell">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark">PSSTOCK</span>
+                <span class="brand-sub">ops board</span>
+            </div>
+
+            <nav class="nav-links">
+                <a href="/dashboard" class="nav-link active">Dashboard</a>
+                <a href="/assets" class="nav-link">Assets</a>
+                <a href="/missions" class="nav-link">Missions</a>
+                <a href="/users" class="nav-link">Utilisateurs</a>
+                <a href="/reports" class="nav-link">Rapports</a>
+            </nav>
+
+            <div class="top-actions">
+                <div class="chip">
+                    <span id="userAvatar" class="icon-btn" style="width: 34px; height: 34px; box-shadow: none;">A</span>
+                    <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                        <span id="userName" style="color: var(--text);">Admin</span>
+                        <small id="userRole" style="color: var(--muted); font-weight: 600;">ADMIN</small>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="logout()">Deconnexion</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <section class="page-hero">
+                <div class="page-meta">
+                    <span class="brand-sub">Vue d'ensemble</span>
+                    <div class="title">Tableau de bord</div>
+                    <div class="subtitle">Synthese en temps reel des missions et assets.</div>
+                </div>
+                <div class="controls-row">
+                    <button class="icon-btn" onclick="loadDashboard()" title="Actualiser">&#8635;</button>
+                    <button class="btn btn-primary btn-sm" onclick="loadDashboard()">Actualiser</button>
+                </div>
+            </section>
+
+            <div id="error-container"></div>
+            <div id="success-container"></div>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Indicateurs cle</div>
+                    <div class="search-bar">
+                        <span style="opacity: 0.6;">&#9776;</span>
+                        <input type="text" placeholder="Rechercher une information rapide" aria-label="Recherche">
+                    </div>
+                </div>
+                <div class="stats-grid" id="statsGrid">
+                    <div class="spinner"></div>
+                </div>
+            </section>
+
+            <section class="data-table">
+                <div class="table-header">
+                    <h3>Activite recente</h3>
+                    <span class="chip">Live feed</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Action</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody id="activityTable">
+                        <tr>
+                            <td colspan="3" class="text-center">
+                                <div class="spinner"></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}" defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof TokenManager === 'undefined' || typeof api === 'undefined') {
+                console.error("static/js/api.js ne s'est pas charge. Verifiez la route statique.");
+                return;
+            }
+
+            if (!TokenManager.isAuthenticated()) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const user = TokenManager.getUser();
+            if (user) {
+                document.getElementById('userName').textContent = user.name || user.username;
+                document.getElementById('userRole').textContent = user.role;
+                document.getElementById('userAvatar').textContent = (user.name || user.username).charAt(0).toUpperCase();
+            }
+
+            async function logout() {
+                if (confirm('Voulez-vous vraiment vous deconnecter ?')) {
+                    await api.logout();
+                }
+            }
+
+            async function loadDashboard() {
+                try {
+                    const data = await api.getDashboard();
+                    displayDashboard(data.dashboard);
+                } catch (error) {
+                    showError('Erreur lors du chargement du dashboard: ' + error.message);
+                }
+            }
+
+            function displayDashboard(dashboard) {
+                const statsGrid = document.getElementById('statsGrid');
+                let statsHTML = '';
+
+                statsHTML += `
+                    <div class="stat-card success">
+                        <h3>Missions actives</h3>
+                        <div class="stat-value">${dashboard.missions.active}</div>
+                        <div class="stat-meta">Operations en cours</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <h3>Missions planifiees</h3>
+                        <div class="stat-value">${dashboard.missions.planned}</div>
+                        <div class="stat-meta">Depart imminent</div>
+                    </div>
+                `;
+
+                dashboard.assets.forEach(asset => {
+                    const color = asset.availability_rate >= 80 ? 'success' :
+                                 asset.availability_rate >= 50 ? 'warning' : 'danger';
+
+                    statsHTML += `
+                        <div class="stat-card ${color}">
+                            <h3>${asset.type}</h3>
+                            <div class="stat-value">${asset.available}/${asset.total}</div>
+                            <div class="stat-meta">Disponibilite: ${asset.availability_rate}%</div>
+                        </div>
+                    `;
+                });
+
+                statsGrid.innerHTML = statsHTML;
+
+                const activityTable = document.getElementById('activityTable');
+                if (dashboard.recent_activity && dashboard.recent_activity.length > 0) {
+                    activityTable.innerHTML = dashboard.recent_activity.map(activity => `
+                        <tr>
+                            <td>${formatDate(activity.date)}</td>
+                            <td><span class="badge badge-info">${activity.action}</span></td>
+                            <td>${activity.description}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    activityTable.innerHTML = `
+                        <tr>
+                            <td colspan="3" class="text-center">Aucune activite recente</td>
+                        </tr>
+                    `;
+                }
+            }
+
+            window.logout = logout;
+            window.loadDashboard = loadDashboard;
+
+            loadDashboard();
+            setInterval(loadDashboard, 30000);
+        });
+    </script>
+</body>
+</html>
