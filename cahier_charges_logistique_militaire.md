@@ -3,7 +3,6 @@
 
 **Version:** 1.0  
 **Date:** 24 Novembre 2025  
-**Classification:** CONFIDENTIEL DÉFENSE  
 **Conformité:** ANSSI, RGS**, RGAA, ISO 27001
 
 ---

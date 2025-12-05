@@ -1,7 +1,7 @@
 {
   "tables": [
     {
-      "name": "assets",
+      "name": "asset",
       "comment": "in mission, on repair, available...",
       "color": "#175e7a",
       "fields": [
@@ -39,7 +39,8 @@
           "notNull": true,
           "primary": false,
           "default": "",
-          "check": ""
+          "check": "",
+          "unsigned": true
         },
         {
           "id": "2P6TKA57hLaYsdjHgboG6",
@@ -95,7 +96,7 @@
         },
         {
           "id": "VvDXXbcWxeO6A5FQzj4tC",
-          "name": "nom",
+          "name": "name",
           "type": "TEXT",
           "comment": "SN, PN, chassi no...",
           "unique": false,
@@ -109,7 +110,7 @@
           "id": "QzSHMLQmmEaAo2yfL1ukp",
           "name": "number",
           "type": "TEXT",
-          "comment": "MRE number 3574\nmay not be necessary",
+          "comment": "MRE number 3574\nmay not be necessary, depends",
           "unique": false,
           "increment": false,
           "notNull": false,
@@ -120,7 +121,7 @@
         {
           "id": "3wOh4xI58OFO6c12Ma4v-",
           "name": "status",
-          "type": "TEXT",
+          "type": "ENUM",
           "default": "",
           "check": "",
           "primary": false,
@@ -128,7 +129,15 @@
           "notNull": true,
           "increment": false,
           "comment": "",
-          "size": 65535
+          "size": 65535,
+          "values": [
+            "STOCK",
+            "DESTROYED",
+            "SOLD",
+            "LOST",
+            "TRANSIT",
+            "PURCHASED"
+          ]
         },
         {
           "id": "Ne43qYLb-u3-kqfyuQ2DV",
@@ -192,7 +201,8 @@
           "notNull": true,
           "primary": true,
           "default": "",
-          "check": ""
+          "check": "",
+          "unsigned": true
         },
         {
           "id": "-NFUy8dGLktQZU7tm3lcV",
@@ -213,7 +223,7 @@
       "y": 29.199999999999932
     },
     {
-      "name": "specs",
+      "name": "spec",
       "comment": "",
       "color": "#175e7a",
       "fields": [
@@ -227,7 +237,8 @@
           "notNull": true,
           "primary": true,
           "default": "",
-          "check": ""
+          "check": "",
+          "unsigned": true
         },
         {
           "id": "G5D8A5QXD93gIa_z-T0Lo",
@@ -343,7 +354,7 @@
       "y": -253
     },
     {
-      "name": "users",
+      "name": "user",
       "comment": "",
       "color": "#175e7a",
       "fields": [
@@ -476,7 +487,7 @@
       "y": 312.80000000000007
     },
     {
-      "name": "group",
+      "name": "role",
       "comment": "admin, user, viewer, technician",
       "color": "#175e7a",
       "fields": [
@@ -557,7 +568,7 @@
           "id": "PrxQ9PcOShr6tdgvQumzm",
           "name": "admin_id",
           "type": "INTEGER",
-          "comment": "",
+          "comment": "required as first admin is created outside of the app so no dependency issue",
           "unique": false,
           "increment": false,
           "notNull": true,
@@ -572,7 +583,7 @@
           "comment": "",
           "unique": false,
           "increment": false,
-          "notNull": false,
+          "notNull": true,
           "primary": false,
           "default": "",
           "check": ""
@@ -616,8 +627,8 @@
       ],
       "indices": [],
       "id": "ZIDowGpAe5DfkSxl-4k1Z",
-      "x": -416,
-      "y": 216.5999999999999
+      "x": -461.8941235079261,
+      "y": 212.6661881590834
     },
     {
       "name": "log",
@@ -649,6 +660,20 @@
           "check": ""
         },
         {
+          "id": "SNiLwHSE9r3f_kh0xOoLI",
+          "name": "spec_id",
+          "type": "INTEGER",
+          "default": "",
+          "check": "",
+          "primary": false,
+          "unique": false,
+          "notNull": false,
+          "increment": false,
+          "comment": "",
+          "size": "",
+          "values": []
+        },
+        {
           "id": "41pGrycvt0kPR5Dku5-fQ",
           "name": "D",
           "type": "DATETIME",
@@ -663,18 +688,23 @@
         {
           "id": "opK_eub_W3eA_54d4cHnv",
           "name": "action",
-          "type": "TEXT",
+          "type": "ENUM",
           "comment": "added car #3\nchanged bullet 7''s grammage value",
           "unique": false,
           "increment": false,
           "notNull": true,
           "primary": false,
           "default": "",
-          "check": ""
+          "check": "",
+          "values": [
+            "CREATED",
+            "DELETED",
+            "EDITED"
+          ]
         },
         {
           "id": "WhncOca0wP67fWqGBOf1P",
-          "name": "old_value",
+          "name": "description",
           "type": "TEXT",
           "default": "",
           "check": "",
@@ -682,22 +712,8 @@
           "unique": false,
           "notNull": true,
           "increment": false,
-          "comment": "",
+          "comment": "added helicopter 7's kilometers",
           "size": 65535
-        },
-        {
-          "id": "SNiLwHSE9r3f_kh0xOoLI",
-          "name": "spec_id",
-          "type": "INTEGER",
-          "default": "",
-          "check": "",
-          "primary": false,
-          "unique": false,
-          "notNull": false,
-          "increment": false,
-          "comment": "",
-          "size": "",
-          "values": []
         }
       ],
       "indices": [],
@@ -809,7 +825,7 @@
         },
         {
           "id": "Nd8E_A54mX-fKCsi0iSeN",
-          "name": "desc",
+          "name": "description",
           "type": "TEXT",
           "default": "",
           "check": "",
@@ -901,7 +917,7 @@
         {
           "id": "a8fq7RJmyNSRBeDHBO2aJ",
           "name": "action",
-          "type": "TEXT",
+          "type": "ENUM",
           "default": "",
           "check": "",
           "primary": false,
@@ -909,11 +925,16 @@
           "notNull": true,
           "increment": false,
           "comment": "changed date, removed description of mission...",
-          "size": 65535
+          "size": 65535,
+          "values": [
+            "CREATED",
+            "DELETED",
+            "EDITED"
+          ]
         },
         {
           "id": "qovVnH3b2HyLZECH_gKOu",
-          "name": "old_value",
+          "name": "description",
           "type": "TEXT",
           "default": "",
           "check": "",
@@ -921,7 +942,7 @@
           "unique": false,
           "notNull": true,
           "increment": false,
-          "comment": "",
+          "comment": "\"changed value x from z to y\"",
           "size": 65535
         }
       ],
@@ -950,7 +971,7 @@
         },
         {
           "id": "uTBHLV6yyyYm_4GvcFMnF",
-          "name": "building",
+          "name": "base_id",
           "type": "INTEGER",
           "default": "",
           "check": "",
@@ -1099,17 +1120,6 @@
       "cardinality": "one_to_one"
     },
     {
-      "name": "target user",
-      "startTableId": "ZIDowGpAe5DfkSxl-4k1Z",
-      "startFieldId": "B1aA-QZaK3UDz_3a0oCA9",
-      "endTableId": "R5mW5aPh-hCiJTsqei8GC",
-      "endFieldId": "qlzyU21V_tEutJfIjtMcm",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "id": 6,
-      "cardinality": "many_to_one"
-    },
-    {
       "name": "admin",
       "startTableId": "ZIDowGpAe5DfkSxl-4k1Z",
       "startFieldId": "PrxQ9PcOShr6tdgvQumzm",
@@ -1196,6 +1206,17 @@
       "deleteConstraint": "No action",
       "name": "asset's spec's logs",
       "id": "jNELz57i_QsPtaebTZMHq"
+    },
+    {
+      "startTableId": "ZIDowGpAe5DfkSxl-4k1Z",
+      "startFieldId": "jhha_qCD6PpgtBHpUh0Qm",
+      "endTableId": "R5mW5aPh-hCiJTsqei8GC",
+      "endFieldId": "qlzyU21V_tEutJfIjtMcm",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_log_admin_user_id_user",
+      "id": "9vvJHZwM8zfYPVhQrFl_g"
     }
   ],
   "notes": [],
