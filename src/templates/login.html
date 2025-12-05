@@ -29,31 +29,28 @@
 
                 <div id="error-container" class="mb-2"></div>
 
-                <form id="loginForm">
+                <form id="loginForm" action="/auth/login" method="POST">
                     <div class="form-group">
-                        <label for="username" class="form-label">Utilisateur</label>
+                        <label for="email" class="form-label">Email</label>
                         <input
-                            type="text"
-                            id="username"
-                            name="username"
-                            class="form-input"
-                            required
-                            autocomplete="username"
-                            placeholder="ex: admin"
-                            autofocus
+                                type="email"
+                                id="email"
+                                name="email"
+                                required
+                                placeholder="Email"
+                                autocomplete="email"
                         >
                     </div>
 
                     <div class="form-group">
                         <label for="password" class="form-label">Mot de passe</label>
                         <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            class="form-input"
-                            required
-                            autocomplete="current-password"
-                            placeholder="********"
+                                type="password"
+                                id="password"
+                                name="password"
+                                required
+                                placeholder="Votre mot de passe"
+                                autocomplete="current-password"
                         >
                     </div>
 
