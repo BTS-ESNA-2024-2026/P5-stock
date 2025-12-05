@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - P5STOCK</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+    <div class="shell">
+        <header class="topbar">
+            <div class="brand">
+                <span class="brand-mark">PSSTOCK</span>
+                <span class="brand-sub">ops board</span>
+            </div>
+
+            <nav class="nav-links">
+                <a href="/dashboard" class="nav-link">Dashboard</a>
+                <a href="/assets" class="nav-link">Assets</a>
+                <a href="/missions" class="nav-link">Missions</a>
+                <a href="/users" class="nav-link">Utilisateurs</a>
+                <a href="/reports" class="nav-link">Rapports</a>
+                <a href="/adminpanel" class="nav-link active">Admin</a>
+            </nav>
+
+            <div class="top-actions">
+                <div class="chip">
+                    <span id="userAvatar" class="icon-btn" style="width: 34px; height: 34px; box-shadow: none;">A</span>
+                    <div style="display: flex; flex-direction: column; line-height: 1.2;">
+                        <span id="userName" style="color: var(--text);">Admin</span>
+                        <small id="userRole" style="color: var(--muted); font-weight: 600;">ADMIN</small>
+                    </div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="logout()">Deconnexion</button>
+            </div>
+        </header>
+
+        <main class="content">
+            <section class="page-hero">
+                <div class="page-meta">
+                    <span class="brand-sub">Administration</span>
+                    <div class="title">Centre de controle</div>
+                    <div class="subtitle">Superviser les roles, utilisateurs et la conformite du systeme.</div>
+                </div>
+                <div class="controls-row">
+                    <span class="chip">Audit actif</span>
+                    <button class="btn btn-primary btn-sm" onclick="refreshAdmin()">Actualiser</button>
+                </div>
+            </section>
+
+            <div id="error-container"></div>
+            <div id="success-container"></div>
+
+            <section class="stats-grid">
+                <div class="stat-card success">
+                    <h3>Utilisateurs actifs</h3>
+                    <div class="stat-value" id="statActiveUsers">--</div>
+                    <div class="stat-meta">Connectes dans les 24h</div>
+                </div>
+                <div class="stat-card warning">
+                    <h3>Roles</h3>
+                    <div class="stat-value" id="statRoles">--</div>
+                    <div class="stat-meta">Profils disponibles</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Demandes en attente</h3>
+                    <div class="stat-value" id="statPending">--</div>
+                    <div class="stat-meta">Approvals / creations</div>
+                </div>
+                <div class="stat-card danger">
+                    <h3>Alertes securite</h3>
+                    <div class="stat-value" id="statAlerts">--</div>
+                    <div class="stat-meta">A traiter</div>
+                </div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Actions rapides</div>
+                </div>
+                <div class="controls-row">
+                    <button class="btn btn-primary btn-sm" onclick="openUserModal()">+ Nouvel utilisateur</button>
+                    <button class="btn btn-secondary btn-sm" onclick="openRoleModal()">+ Nouveau role</button>
+                    <button class="btn btn-secondary btn-sm">Exporter journal</button>
+                </div>
+            </section>
+
+            <section class="data-table">
+                <div class="table-header">
+                    <h3>Utilisateurs</h3>
+                    <div class="search-bar">
+                        <span style="opacity: 0.6;">&#9776;</span>
+                        <input type="text" placeholder="Rechercher un utilisateur" aria-label="Recherche utilisateur">
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Derniere connexion</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Jean Dupont</td>
+                            <td><span class="badge badge-info">ADMIN</span></td>
+                            <td><span class="badge badge-success">Actif</span></td>
+                            <td>2025-01-05 10:22</td>
+                            <td class="flex gap-1">
+                                <button class="btn btn-sm btn-secondary">Edit</button>
+                                <button class="btn btn-sm btn-danger">Suspendre</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Marie Martin</td>
+                            <td><span class="badge badge-info">OPERATEUR</span></td>
+                            <td><span class="badge badge-warning">En attente</span></td>
+                            <td>2025-01-04 21:11</td>
+                            <td class="flex gap-1">
+                                <button class="btn btn-sm btn-secondary">Edit</button>
+                                <button class="btn btn-sm btn-danger">Suspendre</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="data-table">
+                <div class="table-header">
+                    <h3>Roles et permissions</h3>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Description</th>
+                            <th>Permissions cle</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>ADMIN</td>
+                            <td>Controle global sur la plateforme</td>
+                            <td>Users, Assets, Rapports</td>
+                        </tr>
+                        <tr>
+                            <td>OPERATEUR</td>
+                            <td>Execution des operations et suivi</td>
+                            <td>Assets, Missions</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section class="data-table">
+                <div class="table-header">
+                    <h3>Journal securite</h3>
+                    <span class="chip">Live feed</span>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Evenement</th>
+                            <th>Detail</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>2025-01-05 10:25</td>
+                            <td><span class="badge badge-danger">Intrusion</span></td>
+                            <td>Connexion echouee 3x - IP 10.0.0.21</td>
+                        </tr>
+                        <tr>
+                            <td>2025-01-04 22:03</td>
+                            <td><span class="badge badge-info">Audit</span></td>
+                            <td>Export complet des logs par Admin</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
