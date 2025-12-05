@@ -423,14 +423,15 @@
         {
           "id": "V_P61sXyHj0X2D-YSA9ai",
           "name": "username",
-          "type": "TEXT",
+          "type": "VARCHAR",
           "comment": "",
           "unique": true,
           "increment": false,
           "notNull": true,
           "primary": false,
           "default": "",
-          "check": ""
+          "check": "",
+          "size": 255
         },
         {
           "id": "iMM_JZU3ySsPUARPoxY7q",
@@ -1076,50 +1077,6 @@
       "cardinality": "many_to_one"
     },
     {
-      "name": "value of a spec",
-      "startTableId": "GSpHsXqH2XZU5QRfcIGw0",
-      "startFieldId": "SPIN45rAQlVU85hkKJS_r",
-      "endTableId": "VRKO4ko4QQfFjhtD1Vofu",
-      "endFieldId": "e1SN6MX2D2hkmd9IVSP_P",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "id": 2,
-      "cardinality": "one_to_many"
-    },
-    {
-      "name": "specs of a type",
-      "startTableId": "pCViC2e5x5BvmMpYVTH1d",
-      "startFieldId": "4rwGt-hjZoYHRj46Kwvaf",
-      "endTableId": "GSpHsXqH2XZU5QRfcIGw0",
-      "endFieldId": "G5D8A5QXD93gIa_z-T0Lo",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "id": 3,
-      "cardinality": "one_to_many"
-    },
-    {
-      "name": "added by user",
-      "startTableId": "R5mW5aPh-hCiJTsqei8GC",
-      "startFieldId": "qlzyU21V_tEutJfIjtMcm",
-      "endTableId": "TcUia4XT56oZzKnd6GyCD",
-      "endFieldId": "KQ_RRwWfE8ahGVMLLRJnr",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "id": 4,
-      "cardinality": "one_to_one"
-    },
-    {
-      "name": "user groups",
-      "startTableId": "QsY3IvaDLnYy4P10vW_yK",
-      "startFieldId": "oeH5BDyokDcKcPknuk6FT",
-      "endTableId": "R5mW5aPh-hCiJTsqei8GC",
-      "endFieldId": "eRN3VZzyppVq3l3KjdoJG",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "id": 5,
-      "cardinality": "one_to_one"
-    },
-    {
       "name": "admin",
       "startTableId": "ZIDowGpAe5DfkSxl-4k1Z",
       "startFieldId": "PrxQ9PcOShr6tdgvQumzm",
@@ -1175,28 +1132,6 @@
       "id": "3adWK1w7khljibU31qPaO"
     },
     {
-      "startTableId": "Z5Q0zjlYSIrjfIAp8GSxQ",
-      "startFieldId": "gR33Fkruzs0Bd3wQ6XroM",
-      "endTableId": "TcUia4XT56oZzKnd6GyCD",
-      "endFieldId": "0RH91CTxJ6m6x9Nb4Xm6l",
-      "cardinality": "one_to_many",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "name": "asset in room",
-      "id": "KDJsBu2Sr7qQzEWNIbpGq"
-    },
-    {
-      "startTableId": "NAEeyHdp4qz-JR4Ac-8A2",
-      "startFieldId": "8wyuflt3bWnnlcpwU7D-B",
-      "endTableId": "Z5Q0zjlYSIrjfIAp8GSxQ",
-      "endFieldId": "uTBHLV6yyyYm_4GvcFMnF",
-      "cardinality": "one_to_many",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "name": "room in base",
-      "id": "81MR4uKJxxMxCzowdSzrL"
-    },
-    {
       "startTableId": "YwZHOpdgI-4gl3KUdRuwd",
       "startFieldId": "SNiLwHSE9r3f_kh0xOoLI",
       "endTableId": "GSpHsXqH2XZU5QRfcIGw0",
@@ -1217,6 +1152,72 @@
       "deleteConstraint": "No action",
       "name": "fk_log_admin_user_id_user",
       "id": "9vvJHZwM8zfYPVhQrFl_g"
+    },
+    {
+      "startTableId": "Z5Q0zjlYSIrjfIAp8GSxQ",
+      "startFieldId": "uTBHLV6yyyYm_4GvcFMnF",
+      "endTableId": "NAEeyHdp4qz-JR4Ac-8A2",
+      "endFieldId": "8wyuflt3bWnnlcpwU7D-B",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_room_base_id_base",
+      "id": "h0vxkf9zc-5Kw3vO4qyNI"
+    },
+    {
+      "startTableId": "TcUia4XT56oZzKnd6GyCD",
+      "startFieldId": "0RH91CTxJ6m6x9Nb4Xm6l",
+      "endTableId": "Z5Q0zjlYSIrjfIAp8GSxQ",
+      "endFieldId": "gR33Fkruzs0Bd3wQ6XroM",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_asset_room_id_room",
+      "id": "x8Dzy6kPjJm02UnRmvjwR"
+    },
+    {
+      "startTableId": "R5mW5aPh-hCiJTsqei8GC",
+      "startFieldId": "eRN3VZzyppVq3l3KjdoJG",
+      "endTableId": "QsY3IvaDLnYy4P10vW_yK",
+      "endFieldId": "oeH5BDyokDcKcPknuk6FT",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_user_group_id_role",
+      "id": "46h_k5Rfm1K6LsEvKVENK"
+    },
+    {
+      "startTableId": "TcUia4XT56oZzKnd6GyCD",
+      "startFieldId": "KQ_RRwWfE8ahGVMLLRJnr",
+      "endTableId": "R5mW5aPh-hCiJTsqei8GC",
+      "endFieldId": "qlzyU21V_tEutJfIjtMcm",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_asset_added_by_id_user",
+      "id": "b6aSDfBI2hly3ulSXJgPi"
+    },
+    {
+      "startTableId": "GSpHsXqH2XZU5QRfcIGw0",
+      "startFieldId": "G5D8A5QXD93gIa_z-T0Lo",
+      "endTableId": "pCViC2e5x5BvmMpYVTH1d",
+      "endFieldId": "4rwGt-hjZoYHRj46Kwvaf",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_spec_type_id_asset_type",
+      "id": "Cv1NBCveKMS_L-Re36Ket"
+    },
+    {
+      "startTableId": "VRKO4ko4QQfFjhtD1Vofu",
+      "startFieldId": "e1SN6MX2D2hkmd9IVSP_P",
+      "endTableId": "GSpHsXqH2XZU5QRfcIGw0",
+      "endFieldId": "SPIN45rAQlVU85hkKJS_r",
+      "cardinality": "many_to_one",
+      "updateConstraint": "No action",
+      "deleteConstraint": "No action",
+      "name": "fk_value_spec_id_spec",
+      "id": "ISfoRCvCmk0khKdPeRHcy"
     }
   ],
   "notes": [],

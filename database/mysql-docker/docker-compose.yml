@@ -1,0 +1,15 @@
+#sudo systemctl start docker
+#sudo docker compose up -d
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_admin
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: P5DB
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
