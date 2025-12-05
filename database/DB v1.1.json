@@ -238,7 +238,7 @@
           "primary": true,
           "default": "",
           "check": "",
-          "unsigned": true
+          "unsigned": false
         },
         {
           "id": "G5D8A5QXD93gIa_z-T0Lo",
@@ -250,7 +250,8 @@
           "notNull": true,
           "primary": false,
           "default": "",
-          "check": ""
+          "check": "",
+          "unsigned": true
         },
         {
           "id": "1AqbWSxogFQr32OxTp6uv",

@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS `asset_type` (
 
 
 CREATE TABLE IF NOT EXISTS `spec` (
-	`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'specs #7 = how much km a car has',
-	`type_id` TINYINT NOT NULL,
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'specs #7 = how much km a car has',
+	`type_id` TINYINT UNSIGNED NOT NULL,
 	`name` TEXT NOT NULL COMMENT 'km, expiration date, bullet...',
 	PRIMARY KEY(`id`)
 );
