@@ -74,48 +74,5 @@
             </div>
         </main>
     </div>
-
-    <script src="{{ url_for('static', filename='js/api.js') }}" defer></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            if (typeof TokenManager === 'undefined' || typeof api === 'undefined') {
-                console.error("static/js/api.js ne s'est pas charge. Verifiez la route statique.");
-                return;
-            }
-
-            const loginForm = document.getElementById('loginForm');
-            const loginBtn = document.getElementById('loginBtn');
-
-            loginForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-
-                loginBtn.textContent = 'Connexion en cours...';
-                loginBtn.disabled = true;
-
-                try {
-                    const response = await api.login(username, password);
-
-                    if (response.mfa_required) {
-                        showError('MFA non encore implemente dans le frontend');
-                        loginBtn.textContent = 'Se connecter';
-                        loginBtn.disabled = false;
-                    } else {
-                        window.location.href = '/dashboard';
-                    }
-                } catch (error) {
-                    showError(error.message || 'Erreur de connexion');
-                    loginBtn.textContent = 'Se connecter';
-                    loginBtn.disabled = false;
-                }
-            });
-
-            if (TokenManager.isAuthenticated()) {
-                window.location.href = '/dashboard';
-            }
-        });
-    </script>
 </body>
 </html>
