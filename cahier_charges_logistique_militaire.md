@@ -100,111 +100,68 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
 
 **[EF-106-I]** Les sessions utilisateur doivent expirer après 30 minutes d'inactivité.
 
-**[EF-107-S]** Une fonctionnalité de récupération de mot de passe sécurisée doit être disponible.
+#### 3.1.2 Gestion du matèriel
 
-#### 3.1.2 Gestion des stocks d'armement
+**[EF-201-P]** Le système doit permettre l'enregistrement avec son numéro de série (SN) unique.
 
-**[EF-201-P]** Le système doit permettre l'enregistrement de chaque arme avec son numéro de série (SN) unique.
+**[EF-202-P]** Le statut doit être indiqué.
 
-**[EF-202-P]** Chaque arme doit être associée à un type (WeaponType) définissant : nom, description, type, calibre, marque.
+**[EF-203-P]** La localisation précise (bâtiment, salle, section) doit être enregistrée.
 
-**[EF-203-P]** Le statut de chaque arme doit être tracé : AVAILABLE, IN_USE, MAINTENANCE, RETIRED, DAMAGED, LOST.
+**[EF-204-P]** Un historique des mouvements doit être maintenu dans LogMatos.
 
-**[EF-204-P]** Les dates de révision (lastRevision, nextRevision) doivent être enregistrées et surveillées.
+**[EF-205-P]** Enregistrement de la date d'ajout de chaque asset.
 
-**[EF-205-I]** Une alerte automatique doit être générée 30 jours avant une révision planifiée.
+**[EF-206-P]** Ajouter, supprimer des spécifications.
 
-**[EF-206-P]** La localisation précise (bâtiment, salle, section) de chaque arme doit être enregistrée.
+**[EF-207-P]** Supprimer et ajouter des types d'asset.
 
-**[EF-207-I]** Un historique des mouvements doit être maintenu dans LogMatos.
+**[EF-208-I]** Le système doit gérer les stocks de grandes quantités en temps réel.
 
-#### 3.1.3 Gestion des munitions
+**[EF-209-I]** Pouvoir indiquer si un asset est sensible.
 
-**[EF-301-P]** Le système doit gérer les stocks de munitions avec quantités en temps réel.
+**[EF-210-S]** Un rapport mensuel de consommation doit être généré automatiquement.
 
-**[EF-302-P]** Chaque lot de munitions doit être typé (calibre, type de balle, type d'explosif, marque).
+#### 3.1.3 Gestion des missions
 
-**[EF-303-P]** Les conditions de stockage doivent être enregistrées et surveillées.
+**[EF-301-P]** Les utilisateurs autorisés doivent pouvoir créer des missions avec : nom, description, théâtre d'opération, dates.
 
-**[EF-304-P]** Une alerte doit être émise lorsque les quantités descendent sous le seuil critique défini.
+**[EF-302-P]** Le système doit permettre l'affectation de matériel à chaque mission.
 
-**[EF-305-I]** Les dates de création et de péremption doivent être tracées.
+**[EF-303-S]** Le statut des missions doit être suivi : PLANNED, ACTIVE, COMPLETED, CANCELLED, POSTPONED.
 
-**[EF-306-I]** Un rapport mensuel de consommation de munitions doit être généré automatiquement.
+**[EF-304-I]** Un historique des modifications (missionHistory) doit être maintenu.
 
-#### 3.1.4 Gestion des rations (MRE)
+**[EF-305-I]** Le créateur de la mission doit être enregistré.
 
-**[EF-401-P]** Le système doit gérer les rations de combat avec classification (halal, végétarien).
+**[EF-306-S]** À la clôture d'une mission, un rapport automatique doit être généré.
 
-**[EF-402-P]** Les allergènes et contre-indications doivent être enregistrés pour chaque type.
+#### 3.1.4 Logs et audit
 
-**[EF-403-I]** Les conditions de stockage et dates de perception doivent être tracées.
+**[EF-401-P]** Toutes les actions sur le matériel doivent être enregistrées dans LogMatos.
 
-**[EF-404-I]** Une alerte doit être générée pour les rations approchant de leur date limite.
+**[EF-402-P]** Toutes les actions administratives doivent être enregistrées dans LogAdmin.
 
-#### 3.1.5 Gestion des véhicules
+**[EF-403-P]** Les logs doivent être immuables et horodatés avec précision.
 
-**[EF-501-P]** Chaque véhicule doit être identifié par un numéro de châssis et une plaque d'immatriculation uniques.
+**[EF-404-I]** Les logs doivent être conservés pendant au moins 5 ans.
 
-**[EF-502-P]** Le système doit suivre le kilométrage et l'historique de maintenance de chaque véhicule.
+**[EF-405-S]** Une interface de recherche et filtrage des logs doit être disponible pour les administrateurs.
 
-**[EF-503-P]** Les dates de dernière et prochaine maintenance doivent déclencher des alertes automatiques.
+#### 3.1.5 Tableaux de bord et rapports
 
-**[EF-504-I]** Un historique détaillé (VehiclesHistory) doit enregistrer : date, lieu, description, coût des interventions.
-
-**[EF-505-I]** Le statut de disponibilité doit être mis à jour en temps réel : AVAILABLE, IN_USE, MAINTENANCE, RETIRED.
-
-**[EF-506-S]** Une fonctionnalité de géolocalisation des véhicules en mission doit être intégrée.
-
-#### 3.1.6 Gestion des équipements de protection (PP)
-
-**[EF-601-P]** Le système doit gérer les équipements de protection personnelle avec tailles et certifications.
-
-**[EF-602-P]** Les normes et certifications (NIJ, STANAG, etc.) doivent être enregistrées.
-
-**[EF-603-I]** Les équipements obligatoires doivent être identifiés avec un flag "mandatory".
-
-**[EF-604-I]** Les dates de perception et conditions de stockage doivent être tracées.
-
-#### 3.1.7 Gestion des missions
-
-**[EF-701-P]** Les utilisateurs autorisés doivent pouvoir créer des missions avec : nom, description, théâtre d'opération, dates.
-
-**[EF-702-P]** Le système doit permettre l'affectation de matériel et véhicules à chaque mission via la table MM.
-
-**[EF-703-P]** Le statut des missions doit être suivi : PLANNED, ACTIVE, COMPLETED, CANCELLED, POSTPONED.
-
-**[EF-704-I]** Un historique des modifications (missionHistory) doit être maintenu.
-
-**[EF-705-I]** Le créateur de la mission doit être enregistré (creatorName, creatorId).
-
-**[EF-706-I]** À la clôture d'une mission, un rapport automatique doit être généré.
-
-#### 3.1.8 Logs et audit
-
-**[EF-801-P]** Toutes les actions sur le matériel doivent être enregistrées dans LogMatos avec : utilisateur, action, description, date.
-
-**[EF-802-P]** Toutes les actions administratives doivent être enregistrées dans LogAdmin.
-
-**[EF-803-P]** Les logs doivent être immuables et horodatés avec précision.
-
-**[EF-804-I]** Les logs doivent être conservés pendant au moins 5 ans.
-
-**[EF-805-I]** Une interface de recherche et filtrage des logs doit être disponible pour les administrateurs.
-
-#### 3.1.9 Tableaux de bord et rapports
-
-**[EF-901-P]** Le système doit afficher un tableau de bord avec KPI en temps réel :
+**[EF-501-P]** Le système doit afficher un tableau de bord avec KPI en temps réel :
   - Taux de rotation des stocks
   - Niveaux de stock actuels vs. seuils
   - Disponibilité de la flotte de véhicules
   - Missions actives et planifiées
+  - Niveau de péremptions
 
-**[EF-902-I]** Les rapports doivent être exportables en CSV et PDF.
+**[EF-502-I]** Les rapports doivent être exportables en CSV et JSON.
 
-**[EF-903-I]** Des graphiques de tendances et prévisions doivent être générés automatiquement.
+**[EF-503-I]** Des graphiques de tendances et prévisions doivent être générés automatiquement.
 
-**[EF-904-S]** Un module de planification prévisionnelle basé sur l'historique doit être disponible.
+**[EF-504-S]** Un module de planification prévisionnelle basé sur l'historique doit être disponible.
 
 ---
 
@@ -214,18 +171,13 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
 
 **[ET-101-P]** L'application doit utiliser une architecture microservices containerisée avec Docker.
 
-**[ET-102-P]** Le backend doit être développé avec Next.js 14+ (App Router avec API Routes) et TypeScript.
-
-**[ET-102-A]** Next.js sera utilisé en mode fullstack :
-  - Frontend : React Server Components (RSC) + Client Components
-  - Backend : API Routes dans `/app/api/`
-  - Possibilité de déployer des microservices Next.js séparés par domaine métier
+**[ET-102-P]** Le backend doit être développé avec python en Flask.
 
 **[ET-103-P]** Le frontend doit être une SPA (React/Vue.js/Angular) responsive.
 
-**[ET-104-P]** La base de données doit être MySQL 8.0+ avec Prisma ORM.
+**[ET-104-P]** La base de données doit être MySQL 8.0+ avec SQLAlchemy ORM.
 
-**[ET-105-I]** Une API RESTful ou GraphQL doit exposer les fonctionnalités.
+**[ET-105-I]** Une API RESTful doit exposer les fonctionnalités.
 
 **[ET-106-I]** L'application doit être compatible avec les navigateurs modernes (Chrome, Firefox, Edge).
 
@@ -233,7 +185,7 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
 
 **[ET-201-P]** Le temps de réponse pour les requêtes standards doit être < 500ms.
 
-**[ET-202-P]** Le système doit supporter au moins 200 utilisateurs simultanés.
+**[ET-202-P]** Le système doit supporter au moins 20 utilisateurs simultanés.
 
 **[ET-203-I]** Les requêtes de recherche complexes doivent retourner des résultats en < 2s.
 
@@ -243,26 +195,23 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
 
 **[ET-301-P]** L'architecture doit permettre une scalabilité horizontale via Kubernetes.
 
-**[ET-302-I]** Le système doit gérer une croissance de 20% des données annuellement.
-
-**[ET-303-I]** Un système de cache (Redis) doit être implémenté pour optimiser les performances.
+**[ET-302-I]** Un système de cache doit être implémenté pour optimiser les performances.
 
 #### 3.2.4 Base de données
 
-**[ET-402-P]** Des triggers doivent automatiser :
+**[ET-401-P]** Des triggers doivent automatiser :
   - Mise à jour des alertes de seuil
   - Calcul des KPI en temps réel
   - Validation de l'intégrité référentielle
 
-**[ET-402-A]** Configuration MySQL optimisée pour la performance :
-  - InnoDB buffer pool : 70-80% de la RAM disponible
+**[ET-402-P]** Des vues matérialisées doivent être créées pour les rapports fréquents.
+
+**[ET-403-P]** Un système de backup automatique doit être configuré quotidien.
+
+**[ET-404-I]** Configuration MySQL optimisée pour la performance :
   - Query cache activé pour requêtes répétitives
   - Index FULLTEXT pour recherches textuelles
   - Partitionnement des tables de logs par date
-
-**[ET-403-P]** Des vues matérialisées doivent être créées pour les rapports fréquents.
-
-**[ET-404-P]** Un système de backup automatique doit être configuré (quotidien avec rétention 30 jours).
 
 ---
 
@@ -270,64 +219,50 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
 
 #### 3.3.1 Authentification
 
-**[ES-101-P]** L'authentification doit utiliser un mécanisme robuste (bcrypt/argon2) pour le hachage des mots de passe avec salt unique.
+**[ES-101-P]** L'authentification doit utiliser un mécanisme robuste (argon2) pour le hachage des mots de passe (coté client et serveur) avec salt unique.
 
 **[ES-102-P]** La politique de mots de passe doit imposer :
   - Minimum 12 caractères
   - Majuscules, minuscules, chiffres, caractères spéciaux
   - Pas de réutilisation des 10 derniers mots de passe
-  - Rotation obligatoire tous les 90 jours
+  - Rotation obligatoire tous les 90 jours pour les admins
 
 **[ES-103-P]** L'authentification multi-facteurs (TOTP ou U2F) doit être obligatoire pour les rôles ADMIN MODERATOR et USER.
 
-**[ES-104-P]** Les tentatives de connexion échouées doivent être limitées (5 tentatives max, blocage 15 minutes).
+**[ES-104-P]** Les tentatives de connexion échouées doivent être limitées (5 tentatives max, blocage complet).
 
-**[ES-105-I]** Un mécanisme anti-brute force avec CAPTCHA doit être implémenté après 3 échecs.
+**[ES-105-P]** Les sessions doivent utiliser des tokens JWT signés avec RS256 (clés RSA 4096 bits minimum).
 
-**[ES-106-P]** Les sessions doivent utiliser des tokens JWT signés avec RS256 (clés RSA 4096 bits minimum).
-
-**[ES-107-P]** Le refresh token doit être stocké de manière sécurisée (HttpOnly, Secure, SameSite cookies).
-
-**[ES-108-I]** Une détection d'activité suspecte (connexions depuis nouveaux appareils/localisations) doit alerter l'utilisateur.
+**[ES-106-S]** Une détection d'activité suspecte (connexions depuis nouveaux appareils/localisations) doit alerter l'utilisateur.
 
 #### 3.3.2 Autorisation et contrôle d'accès
 
 **[ES-201-P]** Le modèle RBAC (Role-Based Access Control) doit être strictement appliqué au niveau API et UI.
 
-**[ES-202-P]** Les permissions doivent être vérifiées à chaque requête (pas de confiance côté client).
+**[ES-202-P]** Le principe du moindre privilège doit être appliqué pour chaque rôle.
 
-**[ES-203-P]** Le principe du moindre privilège doit être appliqué pour chaque rôle.
-
-**[ES-204-I]** Une matrice de droits détaillée doit être documentée et auditée trimestriellement.
+**[ES-203-I]** Une matrice de droits détaillée doit être documentée et auditée trimestriellement.
 
 #### 3.3.3 Chiffrement des données
 
-**[ES-301-P]** Toutes les communications doivent utiliser TLS 1.3 minimum avec certificats valides.
+**[ES-301-P]** Toutes les communications doivent utiliser TLS 1.3 avec certificats valides.
 
-**[ES-302-P]** Les données sensibles en base de données doivent être chiffrées au repos (AES-256-GCM).
+**[ES-302-P]** Les données en base de données doivent être chiffrées au repos (AES-256-GCM).
 
-**[ES-303-P]** Les champs sensibles doivent être chiffrés individuellement :
-  - Mots de passe (hachage bcrypt/argon2)
-  - Numéros de série sensibles
-  - Données personnelles
-
-**[ES-304-P]** La gestion des clés de chiffrement doit suivre les recommandations ANSSI :
+**[ES-303-P]** La gestion des clés de chiffrement doit suivre les recommandations ANSSI :
   - Rotation annuelle des clés
   - Stockage dans un HSM ou gestionnaire de secrets sécurisé (HashiCorp Vault)
   - Séparation des clés de chiffrement/déchiffrement
 
-**[ES-305-I]** Un mécanisme de chiffrement end-to-end pour les exports sensibles doit être disponible.
-
 #### 3.3.4 Protection contre les attaques
 
 **[ES-401-P]** Protection contre les injections SQL :
-  - Utilisation exclusive de requêtes paramétrées (Prisma ORM)
+  - Utilisation exclusive de requêtes paramétrées (SQLAlchemy ORM)
   - Validation stricte des entrées utilisateur
   - Interdiction de requêtes dynamiques non sécurisées
 
 **[ES-402-P]** Protection contre XSS (Cross-Site Scripting) :
   - Sanitisation de toutes les entrées utilisateur
-  - Content Security Policy (CSP) stricte
   - Encodage des sorties HTML
 
 **[ES-403-P]** Protection contre CSRF (Cross-Site Request Forgery) :
@@ -337,7 +272,7 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
 
 **[ES-404-P]** Protection contre les attaques par déni de service (DDoS) :
   - Rate limiting sur les endpoints API (10 req/s par IP)
-  - Limitation de taille des requêtes (10MB max)
+  - Limitation de taille des requêtes (1MB max)
   - WAF (Web Application Firewall) avec règles OWASP
 
 **[ES-405-P]** Headers de sécurité obligatoires :
@@ -346,8 +281,6 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
   - X-Frame-Options: DENY
   - X-XSS-Protection: 1; mode=block
   - Referrer-Policy: no-referrer
-
-**[ES-406-I]** Un système de détection d'intrusion (IDS/IPS) doit analyser le trafic en temps réel.
 
 #### 3.3.5 Audit et traçabilité
 
@@ -366,97 +299,55 @@ La base militaire gère actuellement ses stocks et sa flotte de véhicules de fa
   - Résultat (succès/échec)
   - Données concernées (sans données sensibles)
 
-**[ES-503-P]** Les logs doivent être immuables et signés cryptographiquement.
-
-**[ES-504-P]** Les logs doivent être centralisés dans un système SIEM dédié.
-
-**[ES-505-P]** Conservation des logs :
-  - Logs de sécurité : 5 ans minimum
-  - Logs applicatifs : 1 an minimum
-  - Logs de debug : 3 mois
-
-**[ES-506-I]** Des alertes automatiques doivent être configurées pour :
+**[ES-503-I]** Des alertes automatiques doivent être configurées pour :
   - Tentatives de connexion suspectes
   - Modifications de droits
   - Accès à des données sensibles en dehors des heures ouvrables
-  - Patterns d'attaque détectés
 
 #### 3.3.6 Sauvegarde et restauration
 
-**[ES-601-P]** Sauvegardes automatiques quotidiennes complètes + incrémentielles horaires.
+**[ES-601-P]** Sauvegardes automatiques incrémentielles horaires.
 
-**[ES-602-P]** Les sauvegardes doivent être chiffrées (AES-256) et stockées sur site distant.
+**[ES-602-I]** Le RPO (Recovery Point Objective) doit être ≤ 1 heure.
 
-**[ES-603-P]** Un test de restauration doit être effectué mensuellement.
-
-**[ES-604-I]** Le RPO (Recovery Point Objective) doit être ≤ 1 heure.
-
-**[ES-605-I]** Le RTO (Recovery Time Objective) doit être ≤ 4 heures.
+**[ES-603-I]** Le RTO (Recovery Time Objective) doit être ≤ 4 heures.
 
 #### 3.3.7 Conformité réglementaire
 
 **[ES-701-P]** Le système doit être conforme au RGS (Référentiel Général de Sécurité niveau).
 
-**[ES-702-P]** Le système doit respecter les recommandations de l'ANSSI pour les systèmes d'information sensibles.
-
-**[ES-703-I]** Un audit de sécurité externe doit être réalisé annuellement.
-
-**[ES-704-I]** Une certification ISO 27001 doit être obtenue dans les 12 mois suivant le déploiement.
-
-**[ES-705-I]** La conformité RGPD doit être assurée pour les données personnelles.
+**[ES-702-I]** La conformité RGPD doit être assurée pour les données personnelles.
 
 
 #### 3.3.8 Sécurité du développement
 
-**[ES-901-P]** Le code doit être analysé par des outils SAST (Static Application Security Testing) à chaque commit.
+**[ES-801-P]** Le code doit être analysé par des outils SAST (Static Application Security Testing) à chaque commit.
 
-**[ES-902-P]** Les dépendances doivent être scannées pour les vulnérabilités connues (Dependabot, Snyk).
-
-**[ES-903-P]** Un pipeline CI/CD sécurisé doit bloquer le déploiement en cas de vulnérabilité critique.
-
-**[ES-904-I]** Des tests de pénétration doivent être réalisés semestriellement.
-
-**[ES-905-I]** Une politique de divulgation responsable des vulnérabilités doit être établie.
+**[ES-802-P]** Un pipeline CI/CD sécurisé doit bloquer le déploiement en cas de vulnérabilité critique.
 
 ---
 
 ### 3.4 Exigences d'Ergonomie [EE]
 
-**[EE-101-P]** L'interface doit être conforme au RGAA (Référentiel Général d'Amélioration de l'Accessibilité) niveau AA minimum.
+**[EE-101-P]** Le design doit être responsive et fonctionnel sur écrans 1024px minimum.
 
-**[EE-102-P]** Le design doit être responsive et fonctionnel sur écrans 1024px minimum.
+**[EE-102-I]** Un mode "Dark Mode" doit être disponible pour réduire la fatigue visuelle.
 
-**[EE-103-I]** Les formulaires doivent avoir une validation en temps réel avec messages d'erreur explicites.
+**[EE-103-I]** Les actions destructives (suppression) doivent requérir une confirmation explicite.
 
-**[EE-104-I]** Un mode "Dark Mode" doit être disponible pour réduire la fatigue visuelle.
+**[EE-104-S]** L'interface doit supporter les raccourcis clavier pour les actions fréquentes.
 
-**[EE-105-I]** Les actions destructives (suppression) doivent requérir une confirmation explicite.
-
-**[EE-106-I]** L'interface doit supporter les raccourcis clavier pour les actions fréquentes.
-
-**[EE-107-S]** Une aide contextuelle (tooltips, documentation inline) doit être disponible.
-
-**[EE-108-S]** L'interface doit être disponible en français et anglais.
+**[EE-105-S]** L'interface doit être disponible en français et anglais.
 
 ---
 
 ### 3.5 Exigences de Management et Qualité [EM]
 
-**[EM-101-P]** Le titulaire du contrat doit organiser un comité de pilotage mensuel.
+**[EM-101-P]** Une documentation technique complète doit être livrée (architecture, API, déploiement, maintenance).
 
-**[EM-102-P]** Un rapport d'avancement détaillé doit être fourni à chaque comité.
+**[EM-102-I]** Des métriques de qualité du code doivent être suivies (couverture de tests > 80%, complexité cyclomatique).
 
-**[EM-103-P]** Une documentation technique complète doit être livrée (architecture, API, déploiement, maintenance).
-
-**[EM-104-P]** Une documentation utilisateur détaillée avec captures d'écran doit être fournie.
-
-**[EM-105-I]** Une formation des utilisateurs (admin, logisticien, utilisateur) doit être dispensée.
-
-**[EM-106-I]** Un support technique doit être disponible pendant 6 mois après le déploiement.
-
-**[EM-107-I]** Un plan de test détaillé doit être élaboré et validé avant les phases de recette.
-
-**[EM-108-S]** Des métriques de qualité du code doivent être suivies (couverture de tests > 80%, complexité cyclomatique).
+**[EM-103-S]** Une documentation utilisateur détaillée avec captures d'écran doit être fournie.
 
 ---
 
