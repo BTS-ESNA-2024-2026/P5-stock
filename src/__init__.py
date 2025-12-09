@@ -2,12 +2,12 @@ from pathlib import Path
 
 from flask import Flask
 
-from src.core.auth.login import auth_blueprint
-from src.core.jsp import base_blueprint
+from src.core.routes.auth.login import auth_blueprint
+from src.core.routes.jsp import base_blueprint
 from dotenv import load_dotenv
 
 
-env_path = Path(__file__).parent.parent / '.env'
+env_path = Path(__file__).parent.parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 def create_app():

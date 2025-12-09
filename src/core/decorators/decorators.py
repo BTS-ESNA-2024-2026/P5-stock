@@ -19,7 +19,7 @@ def require_jwt(f):
         try:
             payload = jwt.decode(
                 token,
-                os.getenv('SECRET_KEY'),
+                os.getenv('JWT_SECRET'),
                 algorithms=['HS256']
             )
             request.user_data = payload
@@ -33,7 +33,7 @@ def require_jwt(f):
         except Exception as e:
             print(token)
             print(e)
-            return jsonify({'error': 'Erreur de validation du token'}), 401
+            return jsonify({'error': 'Erreur de validation du token'}), 500
 
         return f(*args, **kwargs)
 

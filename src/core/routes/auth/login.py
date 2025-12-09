@@ -25,7 +25,6 @@ def post_login():
     #     }), 401
     #############################################################
     # Temporaire
-    print(data)
     if data['email'] == "test@p5stock.fr" and data['password'] == "Sup€rP@ssw0rd":
         access_payload = {
             'user_id': "ububhbo",
