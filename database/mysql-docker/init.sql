@@ -1,4 +1,5 @@
 -- init to create table and main roles + system user
+-- v1.2
 CREATE TABLE IF NOT EXISTS `asset` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'vehicle no 45, 12th HK 416...',
 	`type_asset_id` TINYINT UNSIGNED NOT NULL,
