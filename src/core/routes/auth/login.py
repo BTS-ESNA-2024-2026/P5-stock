@@ -37,7 +37,15 @@ def post_login():
         response = make_response(jsonify({
             'message': 'Login successful',
         }), 200)
-        response.set_cookie('access_token', access_token, httponly=True, max_age=10 * 60)
+        response.set_cookie(
+            'access_token',
+            access_token,
+            httponly=True,  # Prevent XSS
+            secure=True,  # HTTPS only (ANSSI required)
+            samesite='Strict',  # CSRF protection (ANSSI required)
+            max_age=10 * 60,  # 10 minutes
+            path='/'  # Explicit path
+        )
         return response
     return jsonify({
              'message': 'Email or password incorrect',
