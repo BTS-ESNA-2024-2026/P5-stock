@@ -69,7 +69,6 @@ CREATE TABLE IF NOT EXISTS `role` (
 
 CREATE TABLE IF NOT EXISTS `log_admin` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`admin_id` INTEGER NOT NULL COMMENT 'required as first admin is created outside of the app so no dependency issue',
 	`user_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED', 'DEACTIVATED', 'ACTIVATED') NOT NULL COMMENT 'renamed john to martha',
@@ -80,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `log_admin` (
 
 CREATE TABLE IF NOT EXISTS `log` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`asset_id` INTEGER NOT NULL,
+	`asset_id` INTEGER,
 	`spec_id` INTEGER,
 	`value_id` INTEGER,
 	`D` DATETIME NOT NULL,
@@ -136,9 +135,6 @@ ADD FOREIGN KEY(`type_asset_id`) REFERENCES `asset_type`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `value`
 ADD FOREIGN KEY(`asset_id`) REFERENCES `asset`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `log_admin`
-ADD FOREIGN KEY(`admin_id`) REFERENCES `user`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log`
 ADD FOREIGN KEY(`asset_id`) REFERENCES `asset`(`id`)

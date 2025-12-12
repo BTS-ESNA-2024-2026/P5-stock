@@ -555,18 +555,6 @@
           "check": ""
         },
         {
-          "id": "PrxQ9PcOShr6tdgvQumzm",
-          "name": "admin_id",
-          "type": "INTEGER",
-          "comment": "required as first admin is created outside of the app so no dependency issue",
-          "unique": false,
-          "increment": false,
-          "notNull": true,
-          "primary": false,
-          "default": "",
-          "check": ""
-        },
-        {
           "id": "jhha_qCD6PpgtBHpUh0Qm",
           "name": "user_id",
           "type": "INTEGER",
@@ -651,7 +639,7 @@
           "comment": "",
           "unique": false,
           "increment": false,
-          "notNull": true,
+          "notNull": false,
           "primary": false,
           "default": "",
           "check": ""
@@ -1070,17 +1058,6 @@
       "updateConstraint": "No action",
       "deleteConstraint": "No action",
       "id": 1,
-      "cardinality": "many_to_one"
-    },
-    {
-      "name": "admin",
-      "startTableId": "ZIDowGpAe5DfkSxl-4k1Z",
-      "startFieldId": "PrxQ9PcOShr6tdgvQumzm",
-      "endTableId": "R5mW5aPh-hCiJTsqei8GC",
-      "endFieldId": "qlzyU21V_tEutJfIjtMcm",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "id": 7,
       "cardinality": "many_to_one"
     },
     {
