@@ -79,3 +79,6 @@ temp/
 
 .venv
 .idea
+
+private.pem
+public.pem

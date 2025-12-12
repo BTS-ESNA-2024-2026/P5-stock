@@ -13,27 +13,24 @@ def require_jwt(f):
         if not token:
             a = r.randint(0, 100)
             if a == 5:
-                return jsonify({'error': 'Token manquant'}), 418
-            return jsonify({'error': 'Token manquant'}), 401
+                return jsonify({'error': 'Invalid token'}), 418
+            return jsonify({'error': 'Invalid token'}), 401
 
+        public_key = open('public.pem', 'rb').read()
         try:
-            payload = jwt.decode(
-                token,
-                os.getenv('JWT_SECRET'),
-                algorithms=['HS256']
-            )
+            payload = jwt.decode(token, public_key, algorithms=['RS256'])
             request.user_data = payload
 
         except jwt.ExpiredSignatureError:
-            return jsonify({'error': 'Token expiré'}), 401
+            return jsonify({'error': 'Invalid token'}), 401
         except jwt.InvalidSignatureError:
-            return jsonify({'error': 'Signature invalide'}), 401
+            return jsonify({'error': 'Invalid token'}), 401
         except jwt.DecodeError:
-            return jsonify({'error': 'Token invalide'}), 401
+            return jsonify({'error': 'Invalid token'}), 401
         except Exception as e:
             print(token)
             print(e)
-            return jsonify({'error': 'Erreur de validation du token'}), 500
+            return jsonify({'error': 'Server error'}), 500
 
         return f(*args, **kwargs)
 

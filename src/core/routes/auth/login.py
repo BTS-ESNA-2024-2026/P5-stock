@@ -32,7 +32,8 @@ def post_login():
             'iat': datetime.utcnow(),
             'type': 'access'
         }
-        access_token = jwt.encode(access_payload, os.getenv("JWT_SECRET"), algorithm='HS256')
+        private_key = open('private.pem', 'rb').read()
+        access_token = jwt.encode(access_payload, private_key, algorithm='RS256')
         response = make_response(jsonify({
             'message': 'Login successful',
         }), 200)
