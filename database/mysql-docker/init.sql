@@ -1,10 +1,6 @@
 -- init to create table and main roles + system user
-CREATE DATABASE IF NOT EXISTS P5DB;
-USE P5DB;
-
 CREATE TABLE IF NOT EXISTS `asset` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'vehicle no 45, 12th HK 416...',
-	`added_by_id` INTEGER NOT NULL,
 	`type_asset_id` TINYINT UNSIGNED NOT NULL,
 	`mission_id` INTEGER COMMENT 'no assigned mission if value not assigned',
 	`room_id` INTEGER,
@@ -77,7 +73,7 @@ CREATE TABLE IF NOT EXISTS `log_admin` (
 	`admin_id` INTEGER NOT NULL COMMENT 'required as first admin is created outside of the app so no dependency issue',
 	`user_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
-	`action` TEXT NOT NULL COMMENT 'renamed john to martha',
+	`action` ENUM('CREATED', 'DELETED', 'EDITED', 'DEACTIVATED', 'ACTIVATED') NOT NULL COMMENT 'renamed john to martha',
 	`desc` TEXT,
 	PRIMARY KEY(`id`)
 ) COMMENT='separated admin logs for added security, when user (user_id) are edited/added... or when app settings are changed';
@@ -87,17 +83,18 @@ CREATE TABLE IF NOT EXISTS `log` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`asset_id` INTEGER NOT NULL,
 	`spec_id` INTEGER,
+	`value_id` INTEGER,
+	`user_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED') NOT NULL COMMENT 'added car #3
 changed bullet 7''''s grammage value',
-	`description` TEXT(65535) NOT NULL COMMENT 'added helicopter 7''s kilometers',
+	`description` TEXT(65535) COMMENT 'added helicopter 7''s kilometers',
 	PRIMARY KEY(`id`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `mission` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`created_by_id` INTEGER NOT NULL,
 	`DA` DATETIME NOT NULL,
 	`DE` DATETIME NOT NULL,
 	`date_start` DATETIME,
@@ -113,9 +110,10 @@ CREATE TABLE IF NOT EXISTS `mission` (
 CREATE TABLE IF NOT EXISTS `log_mission` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`mission_id` INTEGER NOT NULL,
+	`user_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED') NOT NULL COMMENT 'changed date, removed description of mission...',
-	`description` TEXT(65535) NOT NULL COMMENT '"changed value x from z to y"',
+	`description` TEXT(65535) COMMENT '"changed value x from z to y"',
 	PRIMARY KEY(`id`)
 );
 
@@ -154,9 +152,6 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `asset`
 ADD FOREIGN KEY(`mission_id`) REFERENCES `mission`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `mission`
-ADD FOREIGN KEY(`created_by_id`) REFERENCES `user`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log`
 ADD FOREIGN KEY(`spec_id`) REFERENCES `spec`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
@@ -172,14 +167,20 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `user`
 ADD FOREIGN KEY(`group_id`) REFERENCES `role`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `asset`
-ADD FOREIGN KEY(`added_by_id`) REFERENCES `user`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `spec`
 ADD FOREIGN KEY(`type_id`) REFERENCES `asset_type`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `value`
 ADD FOREIGN KEY(`spec_id`) REFERENCES `spec`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `log`
+ADD FOREIGN KEY(`user_id`) REFERENCES `user`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `log_mission`
+ADD FOREIGN KEY(`user_id`) REFERENCES `user`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `log`
+ADD FOREIGN KEY(`value_id`) REFERENCES `value`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 -- admin role
