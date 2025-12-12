@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `role` (
 	`id` TINYINT NOT NULL AUTO_INCREMENT UNIQUE,
 	`name` TEXT NOT NULL COMMENT 'admin, user',
 	`desc` TEXT,
-	`perms` BOOLEAN NOT NULL,
+	`perms` JSON NOT NULL,
 	PRIMARY KEY(`id`)
 ) COMMENT='admin, user, viewer, technician';
 
