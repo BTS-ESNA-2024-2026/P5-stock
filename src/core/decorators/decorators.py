@@ -22,10 +22,13 @@ def require_jwt(f):
             request.user_data = payload
 
         except jwt.ExpiredSignatureError:
+            print("Token expired")
             return jsonify({'error': 'Invalid token'}), 401
         except jwt.InvalidSignatureError:
+            print("Signature valide Error")
             return jsonify({'error': 'Invalid token'}), 401
         except jwt.DecodeError:
+            print("Token decode Error")
             return jsonify({'error': 'Invalid token'}), 401
         except Exception as e:
             print(token)
