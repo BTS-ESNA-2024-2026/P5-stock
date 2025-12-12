@@ -171,8 +171,8 @@
       ],
       "indices": [],
       "id": "TcUia4XT56oZzKnd6GyCD",
-      "x": 198.20000000000005,
-      "y": -41.80000000000001
+      "x": 141.95000000000005,
+      "y": -151.8
     },
     {
       "name": "asset_type",
@@ -207,8 +207,8 @@
       ],
       "indices": [],
       "id": "pCViC2e5x5BvmMpYVTH1d",
-      "x": 621.8000000000002,
-      "y": 29.199999999999932
+      "x": 606.8000000000002,
+      "y": 42.94999999999982
     },
     {
       "name": "spec",
@@ -256,8 +256,8 @@
       ],
       "indices": [],
       "id": "GSpHsXqH2XZU5QRfcIGw0",
-      "x": 1054.1999999999998,
-      "y": -62.99999999999994
+      "x": 1051.6999999999998,
+      "y": -92.99999999999994
     },
     {
       "name": "value",
@@ -520,7 +520,7 @@
         {
           "id": "4BciS2pYWImN3TawWug-b",
           "name": "perms",
-          "type": "JSON",
+          "type": "BOOLEAN",
           "comment": "",
           "unique": false,
           "increment": false,
@@ -534,8 +534,8 @@
       ],
       "indices": [],
       "id": "QsY3IvaDLnYy4P10vW_yK",
-      "x": 196.8000000000003,
-      "y": 458.19999999999993
+      "x": 158.0500000000003,
+      "y": 370.69999999999993
     },
     {
       "name": "log_admin",
@@ -624,8 +624,8 @@
       ],
       "indices": [],
       "id": "ZIDowGpAe5DfkSxl-4k1Z",
-      "x": -483.8941235079261,
-      "y": 209.6661881590834
+      "x": -471.3941235079261,
+      "y": 218.4161881590834
     },
     {
       "name": "log",
@@ -679,20 +679,6 @@
           "primary": false,
           "unique": false,
           "notNull": false,
-          "increment": false,
-          "comment": "",
-          "size": "",
-          "values": []
-        },
-        {
-          "id": "vUrsHjyN05UsliRJG1-cY",
-          "name": "user_id",
-          "type": "INTEGER",
-          "default": "",
-          "check": "",
-          "primary": false,
-          "unique": false,
-          "notNull": true,
           "increment": false,
           "comment": "",
           "size": "",
@@ -912,20 +898,6 @@
           "values": []
         },
         {
-          "id": "AjH_5M47sODAP6qRiLLmY",
-          "name": "user_id",
-          "type": "INTEGER",
-          "default": "",
-          "check": "",
-          "primary": false,
-          "unique": false,
-          "notNull": true,
-          "increment": false,
-          "comment": "",
-          "size": "",
-          "values": []
-        },
-        {
           "id": "F_x8R9435hjzxaUdpZEx2",
           "name": "D",
           "type": "DATETIME",
@@ -978,8 +950,8 @@
     {
       "id": "Z5Q0zjlYSIrjfIAp8GSxQ",
       "name": "room",
-      "x": 531.8,
-      "y": 185.20000000000005,
+      "x": 503.04999999999995,
+      "y": 205.19999999999993,
       "locked": false,
       "fields": [
         {
@@ -1029,8 +1001,8 @@
     {
       "id": "NAEeyHdp4qz-JR4Ac-8A2",
       "name": "base",
-      "x": 875.6,
-      "y": 172.59999999999997,
+      "x": 850.6,
+      "y": 180.09999999999997,
       "locked": false,
       "fields": [
         {
@@ -1220,28 +1192,6 @@
       "deleteConstraint": "No action",
       "name": "value of an asset spec's",
       "id": "ISfoRCvCmk0khKdPeRHcy"
-    },
-    {
-      "startTableId": "YwZHOpdgI-4gl3KUdRuwd",
-      "startFieldId": "vUrsHjyN05UsliRJG1-cY",
-      "endTableId": "R5mW5aPh-hCiJTsqei8GC",
-      "endFieldId": "qlzyU21V_tEutJfIjtMcm",
-      "cardinality": "many_to_one",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "name": "log asset/spec changed by",
-      "id": "elnKzBv0bSpdDCsKYDpYB"
-    },
-    {
-      "startTableId": "M6zyAeW3lp7LeNn_LAQik",
-      "startFieldId": "AjH_5M47sODAP6qRiLLmY",
-      "endTableId": "R5mW5aPh-hCiJTsqei8GC",
-      "endFieldId": "qlzyU21V_tEutJfIjtMcm",
-      "cardinality": "many_to_one",
-      "updateConstraint": "No action",
-      "deleteConstraint": "No action",
-      "name": "log mission by",
-      "id": "q1tMTA3Tfe8-4ej_U3Ym3"
     },
     {
       "startTableId": "YwZHOpdgI-4gl3KUdRuwd",

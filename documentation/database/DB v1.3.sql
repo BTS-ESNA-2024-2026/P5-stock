@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `role` (
 	`id` TINYINT NOT NULL AUTO_INCREMENT UNIQUE,
 	`name` TEXT NOT NULL COMMENT 'admin, user',
 	`desc` TEXT,
-	`perms` JSON NOT NULL,
+	`perms` BOOLEAN NOT NULL,
 	PRIMARY KEY(`id`)
 ) COMMENT='admin, user, viewer, technician';
 
@@ -83,7 +83,6 @@ CREATE TABLE IF NOT EXISTS `log` (
 	`asset_id` INTEGER NOT NULL,
 	`spec_id` INTEGER,
 	`value_id` INTEGER,
-	`user_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED') NOT NULL COMMENT 'added car #3
 changed bullet 7''''s grammage value',
@@ -109,7 +108,6 @@ CREATE TABLE IF NOT EXISTS `mission` (
 CREATE TABLE IF NOT EXISTS `log_mission` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`mission_id` INTEGER NOT NULL,
-	`user_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED') NOT NULL COMMENT 'changed date, removed description of mission...',
 	`description` TEXT(65535) COMMENT '"changed value x from z to y"',
@@ -171,12 +169,6 @@ ADD FOREIGN KEY(`type_id`) REFERENCES `asset_type`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `value`
 ADD FOREIGN KEY(`spec_id`) REFERENCES `spec`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `log`
-ADD FOREIGN KEY(`user_id`) REFERENCES `user`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `log_mission`
-ADD FOREIGN KEY(`user_id`) REFERENCES `user`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log`
 ADD FOREIGN KEY(`value_id`) REFERENCES `value`(`id`)
