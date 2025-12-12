@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `asset` (
 may not be necessary, depends',
 	`status` ENUM('STOCK', 'DESTROYED', 'SOLD', 'LOST', 'TRANSIT', 'PURCHASED') NOT NULL,
 	`quantity` INTEGER COMMENT 'for packs, do not set if quantity = 1 like for a vehicle',
-	`shelf` TEXT COMMENT 'shelf no 355',
+	`shelf` TEXT(65535) COMMENT 'shelf no 355',
 	`sensible` BOOLEAN,
 	PRIMARY KEY(`id`)
 ) COMMENT='in mission, on repair, available...';
@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS `asset_type` (
 
 
 CREATE TABLE IF NOT EXISTS `spec` (
-	`id` INTEGER UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'specs #7 = how much km a car has',
-	`type_id` TINYINT NOT NULL,
+	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE COMMENT 'specs #7 = how much km a car has',
+	`type_id` TINYINT UNSIGNED NOT NULL,
 	`name` TEXT NOT NULL COMMENT 'km, expiration date, bullet...',
 	PRIMARY KEY(`id`)
 );
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 	`DA` DATETIME NOT NULL,
 	`DE` DATETIME NOT NULL,
 	`active` BOOLEAN NOT NULL DEFAULT TRUE,
-	`username` TEXT NOT NULL UNIQUE,
+	`username` VARCHAR(255) NOT NULL UNIQUE,
 	`name` TEXT,
 	`hash` TEXT NOT NULL COMMENT '1945B09A02C889190B3',
 	`hash_algorithm` TEXT NOT NULL COMMENT 'algo_rounds
@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `log` (
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED') NOT NULL COMMENT 'added car #3
 changed bullet 7''''s grammage value',
-	`description` TEXT NOT NULL COMMENT 'added helicopter 7''s kilometers',
+	`description` TEXT(65535) NOT NULL COMMENT 'added helicopter 7''s kilometers',
 	PRIMARY KEY(`id`)
 );
 
@@ -98,10 +98,10 @@ CREATE TABLE IF NOT EXISTS `mission` (
 	`DE` DATETIME NOT NULL,
 	`date_start` DATETIME,
 	`date_end` DATETIME,
-	`title` TEXT NOT NULL,
-	`description` TEXT,
-	`status` TEXT NOT NULL COMMENT 'finished, planned...',
-	`theatre` TEXT NOT NULL COMMENT 'location',
+	`title` TEXT(65535) NOT NULL,
+	`description` TEXT(65535),
+	`status` TEXT(65535) NOT NULL COMMENT 'finished, planned...',
+	`theatre` TEXT(65535) NOT NULL COMMENT 'location',
 	PRIMARY KEY(`id`)
 );
 
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `log_mission` (
 	`mission_id` INTEGER NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED') NOT NULL COMMENT 'changed date, removed description of mission...',
-	`description` TEXT NOT NULL COMMENT '"changed value x from z to y"',
+	`description` TEXT(65535) NOT NULL COMMENT '"changed value x from z to y"',
 	PRIMARY KEY(`id`)
 );
 
@@ -119,15 +119,15 @@ CREATE TABLE IF NOT EXISTS `log_mission` (
 CREATE TABLE IF NOT EXISTS `room` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`base_id` INTEGER NOT NULL,
-	`room` TEXT NOT NULL COMMENT 'Paris',
+	`room` TEXT(65535) NOT NULL COMMENT 'Paris',
 	PRIMARY KEY(`id`)
 );
 
 
 CREATE TABLE IF NOT EXISTS `base` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
-	`name` TEXT NOT NULL,
-	`address` TEXT NOT NULL,
+	`name` TEXT(65535) NOT NULL,
+	`address` TEXT(65535) NOT NULL,
 	PRIMARY KEY(`id`)
 );
 
@@ -137,18 +137,6 @@ ADD FOREIGN KEY(`type_asset_id`) REFERENCES `asset_type`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `value`
 ADD FOREIGN KEY(`asset_id`) REFERENCES `asset`(`id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `spec`
-ADD FOREIGN KEY(`id`) REFERENCES `value`(`spec_id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `asset_type`
-ADD FOREIGN KEY(`id`) REFERENCES `spec`(`type_id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `user`
-ADD FOREIGN KEY(`id`) REFERENCES `asset`(`added_by_id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `role`
-ADD FOREIGN KEY(`id`) REFERENCES `user`(`group_id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log_admin`
 ADD FOREIGN KEY(`admin_id`) REFERENCES `user`(`id`)
@@ -165,15 +153,27 @@ ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `mission`
 ADD FOREIGN KEY(`created_by_id`) REFERENCES `user`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `room`
-ADD FOREIGN KEY(`id`) REFERENCES `asset`(`room_id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
-ALTER TABLE `base`
-ADD FOREIGN KEY(`id`) REFERENCES `room`(`base_id`)
-ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log`
 ADD FOREIGN KEY(`spec_id`) REFERENCES `spec`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 ALTER TABLE `log_admin`
 ADD FOREIGN KEY(`user_id`) REFERENCES `user`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `room`
+ADD FOREIGN KEY(`base_id`) REFERENCES `base`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `asset`
+ADD FOREIGN KEY(`room_id`) REFERENCES `room`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `user`
+ADD FOREIGN KEY(`group_id`) REFERENCES `role`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `asset`
+ADD FOREIGN KEY(`added_by_id`) REFERENCES `user`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `spec`
+ADD FOREIGN KEY(`type_id`) REFERENCES `asset_type`(`id`)
+ON UPDATE NO ACTION ON DELETE NO ACTION;
+ALTER TABLE `value`
+ADD FOREIGN KEY(`spec_id`) REFERENCES `spec`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
