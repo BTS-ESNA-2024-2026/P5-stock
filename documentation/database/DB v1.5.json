@@ -520,7 +520,7 @@
         {
           "id": "4BciS2pYWImN3TawWug-b",
           "name": "perms",
-          "type": "BOOLEAN",
+          "type": "JSON",
           "comment": "",
           "unique": false,
           "increment": false,
