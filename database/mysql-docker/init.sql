@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `role` (
 	`id` TINYINT NOT NULL AUTO_INCREMENT UNIQUE,
 	`name` TEXT NOT NULL COMMENT 'admin, user',
 	`desc` TEXT,
-	`perms` BOOLEAN NOT NULL,
+	`perms` JSON NOT NULL,
 	PRIMARY KEY(`id`)
 ) COMMENT='admin, user, viewer, technician';
 
@@ -212,7 +212,7 @@ VALUES (
 INSERT INTO `role` (`name`, `desc`, `perms`)
 VALUES (
   'secure_user',
-  'system admins',
+  'military user, RW on all assets',
   JSON_OBJECT("manage_admins", false,
     "admin_panel", false,
     "sensible_access", true,
@@ -224,7 +224,7 @@ VALUES (
 INSERT INTO `role` (`name`, `desc`, `perms`)
 VALUES (
   'user',
-  'system admins',
+  'standard military user, RW on most assets (non sensible)',
   JSON_OBJECT("manage_admins", false,
     "admin_panel", false,
     "sensible_access", false,
@@ -232,11 +232,11 @@ VALUES (
     "view_assets", true)
 );
 
--- standard user role
+-- viewer role
 INSERT INTO `role` (`name`, `desc`, `perms`)
 VALUES (
-  'user',
-  'system admins',
+  'viewer',
+  'users for displays, read only',
   JSON_OBJECT("manage_admins", false,
     "admin_panel", false,
     "sensible_access", false,
