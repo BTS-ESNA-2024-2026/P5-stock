@@ -197,7 +197,7 @@ VALUES (
 );
 
 -- technician role
-INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+INSERT INTO `role` (`name`, `desc`, `perms`)
 VALUES (
   'technician',
   'system technicien, like admin but cannot create other admins',
@@ -209,7 +209,7 @@ VALUES (
 );
 
 -- standard user role with sensible asset access
-INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+INSERT INTO `role` (`name`, `desc`, `perms`)
 VALUES (
   'secure_user',
   'system admins',
@@ -221,7 +221,7 @@ VALUES (
 );
 
 -- standard user role
-INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+INSERT INTO `role` (`name`, `desc`, `perms`)
 VALUES (
   'user',
   'system admins',
@@ -233,7 +233,7 @@ VALUES (
 );
 
 -- standard user role
-INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+INSERT INTO `role` (`name`, `desc`, `perms`)
 VALUES (
   'user',
   'system admins',
