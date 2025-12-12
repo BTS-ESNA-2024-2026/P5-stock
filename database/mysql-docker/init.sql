@@ -1,3 +1,4 @@
+-- init to create table and main roles + system user
 CREATE DATABASE IF NOT EXISTS P5DB;
 USE P5DB;
 
@@ -181,17 +182,68 @@ ALTER TABLE `value`
 ADD FOREIGN KEY(`spec_id`) REFERENCES `spec`(`id`)
 ON UPDATE NO ACTION ON DELETE NO ACTION;
 
--- INSERT ADMIN ROLE
+-- admin role
 INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
 VALUES (
   1,
   'admin',
   'system admins',
-  JSON_OBJECT('all', true)
+  JSON_OBJECT("manage_admins", true,
+    "admin_panel", true,
+    "sensible_access", true,
+    "edit_assets", true,
+    "view_assets", true)
 );
 
+-- technician role
+INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+VALUES (
+  'technician',
+  'system technicien, like admin but cannot create other admins',
+  JSON_OBJECT("manage_admins", false,
+    "admin_panel", true,
+    "sensible_access", true,
+    "edit_assets", true,
+    "view_assets", true)
+);
 
--- INSERT GENERIC ADMIN USER
+-- standard user role with sensible asset access
+INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+VALUES (
+  'secure_user',
+  'system admins',
+  JSON_OBJECT("manage_admins", false,
+    "admin_panel", false,
+    "sensible_access", true,
+    "edit_assets", true,
+    "view_assets", true)
+);
+
+-- standard user role
+INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+VALUES (
+  'user',
+  'system admins',
+  JSON_OBJECT("manage_admins", false,
+    "admin_panel", false,
+    "sensible_access", false,
+    "edit_assets", true,
+    "view_assets", true)
+);
+
+-- standard user role
+INSERT INTO `role` (`id`, `name`, `desc`, `perms`)
+VALUES (
+  'user',
+  'system admins',
+  JSON_OBJECT("manage_admins", false,
+    "admin_panel", false,
+    "sensible_access", false,
+    "edit_assets", false,
+    "view_assets", true)
+);
+
+-- system user
 INSERT INTO `user` (`group_id`, `DA`, `DE`, `active`, `username`, `name`, `hash`, `hash_algorithm`, `MFA`)
 VALUES (
   1,
@@ -199,8 +251,8 @@ VALUES (
   NOW(),
   TRUE,
   'system',
-  'P5 main admin',
+  'P5 main system user',
   '-',
-  'ARGON2_32',
+  '-',
   NULL
 );
