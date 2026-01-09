@@ -1,0 +1,8 @@
+# Namespace for P5-Stock
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: p5stock
+  labels:
+    name: p5stock
+    istio-injection: enabled

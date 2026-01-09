@@ -1,0 +1,17 @@
+# Pod Disruption Budget for P5-Stock
+# Issue #5: Haute disponibilité 99.9%
+# Ensures minimum availability during maintenance
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: p5stock-pdb
+  namespace: p5stock
+  labels:
+    app: p5stock
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: p5stock
+      component: web

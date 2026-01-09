@@ -1,0 +1,165 @@
+# Backup CronJob for P5-Stock
+# Issue #29: Automated backups
+#
+# Schedule:
+# - Hourly: Incremental (binary log) backup
+# - Daily (2 AM): Full backup
+# - Weekly: Backup verification
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mysql-backup-full
+  namespace: p5stock
+  labels:
+    app: p5stock
+    component: backup
+spec:
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  timeZone: "Europe/Paris"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 7
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: mysql:8.0
+              command:
+                - /bin/bash
+                - /scripts/backup.sh
+                - full
+              envFrom:
+                - secretRef:
+                    name: backup-credentials
+              env:
+                - name: MYSQL_HOST
+                  value: "mysql-primary.p5stock.svc.cluster.local"
+                - name: MYSQL_PORT
+                  value: "3306"
+                - name: S3_BUCKET
+                  value: "p5stock-backups"
+                - name: S3_ENABLED
+                  value: "true"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: backup-storage
+                  mountPath: /var/backups/mysql
+                - name: encryption-key
+                  mountPath: /etc/mysql-backup
+                  readOnly: true
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+          volumes:
+            - name: scripts
+              configMap:
+                name: backup-scripts
+                defaultMode: 0755
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: backup-pvc
+            - name: encryption-key
+              secret:
+                secretName: backup-encryption-key
+---
+# Hourly incremental backup
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mysql-backup-incremental
+  namespace: p5stock
+  labels:
+    app: p5stock
+    component: backup
+spec:
+  schedule: "0 * * * *"  # Every hour
+  timeZone: "Europe/Paris"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 24
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: mysql:8.0
+              command:
+                - /bin/bash
+                - /scripts/backup.sh
+                - binlog
+              envFrom:
+                - secretRef:
+                    name: backup-credentials
+              env:
+                - name: MYSQL_HOST
+                  value: "mysql-primary.p5stock.svc.cluster.local"
+              volumeMounts:
+                - name: scripts
+                  mountPath: /scripts
+                - name: backup-storage
+                  mountPath: /var/backups/mysql
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "50m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"
+          volumes:
+            - name: scripts
+              configMap:
+                name: backup-scripts
+                defaultMode: 0755
+            - name: backup-storage
+              persistentVolumeClaim:
+                claimName: backup-pvc
+---
+# Backup storage PVC
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backup-pvc
+  namespace: p5stock
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: standard
+---
+# Backup credentials secret (template)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-credentials
+  namespace: p5stock
+type: Opaque
+stringData:
+  MYSQL_USER: "backup_user"
+  MYSQL_PASSWORD: "CHANGE_ME"
+  AWS_ACCESS_KEY_ID: "CHANGE_ME"
+  AWS_SECRET_ACCESS_KEY: "CHANGE_ME"
+---
+# Encryption key secret (template)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-encryption-key
+  namespace: p5stock
+type: Opaque
+data:
+  encryption.key: ""  # Base64 encoded encryption key

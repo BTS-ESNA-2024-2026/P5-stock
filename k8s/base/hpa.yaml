@@ -1,0 +1,75 @@
+# Horizontal Pod Autoscaler for P5-Stock
+# Issue #35: Scalabilité - HPA (Horizontal Pod Autoscaler) configured
+#
+# Features:
+# - Auto-scale based on CPU and memory
+# - Min 3, Max 10 replicas
+# - Scale up/down policies for stability
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: p5stock-hpa
+  namespace: p5stock
+  labels:
+    app: p5stock
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: p5stock-app
+  
+  # Replica limits
+  minReplicas: 3
+  maxReplicas: 10
+  
+  # Scaling metrics
+  metrics:
+    # CPU-based scaling
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    
+    # Memory-based scaling
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    
+    # Custom metric: requests per second (requires metrics adapter)
+    # - type: Pods
+    #   pods:
+    #     metric:
+    #       name: http_requests_per_second
+    #     target:
+    #       type: AverageValue
+    #       averageValue: "100"
+  
+  # Scaling behavior for stability
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+      selectPolicy: Max
+    
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+        - type: Percent
+          value: 25
+          periodSeconds: 120
+      selectPolicy: Min

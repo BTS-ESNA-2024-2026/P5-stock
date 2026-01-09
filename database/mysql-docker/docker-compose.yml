@@ -1,15 +1,238 @@
-#sudo systemctl start docker
-#sudo docker compose up -d
+# MySQL HA Setup with Master-Replica Replication
+# Issue #38: MySQL HA avec réplication master-replica
+# Issue #5: Haute disponibilité 99.9%
+#
+# Usage:
+#   docker compose up -d
+#   docker compose logs -f
+#
+# Architecture:
+#   - 1 Primary (read/write) on port 3306
+#   - 2 Replicas (read-only) on ports 3307, 3308
+#   - ProxySQL for connection pooling on port 6033
+#   - Orchestrator for automatic failover on port 3000
+#   - Redis for caching on port 6379
 
 services:
-  mysql:
+  # ============================================
+  # MySQL Primary (Master) - Read/Write
+  # ============================================
+  mysql-primary:
     image: mysql:8.0
-    container_name: mysql_admin
+    container_name: mysql_primary
+    hostname: mysql-primary
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: P5DB
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-P5DB}
+      MYSQL_USER: ${MYSQL_USER:-app_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app_password}
     ports:
       - "3306:3306"
     volumes:
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_primary_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./conf/primary/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./scripts/setup-replication.sql:/docker-entrypoint-initdb.d/02-setup-replication.sql
+    command:
+      - --server-id=1
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --log-slave-updates=ON
+      - --sync-binlog=1
+      - --innodb-flush-log-at-trx-commit=1
+      - --rpl-semi-sync-source-enabled=1
+      - --rpl-semi-sync-source-timeout=1000
+    networks:
+      - mysql-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================
+  # MySQL Replica 1 - Read-Only (Semi-sync)
+  # ============================================
+  mysql-replica-1:
+    image: mysql:8.0
+    container_name: mysql_replica_1
+    hostname: mysql-replica-1
+    restart: always
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_replica1_data:/var/lib/mysql
+      - ./conf/replica/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./scripts/start-replica.sh:/docker-entrypoint-initdb.d/start-replica.sh
+    command:
+      - --server-id=2
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --log-slave-updates=ON
+      - --read-only=ON
+      - --super-read-only=ON
+      - --rpl-semi-sync-replica-enabled=1
+    networks:
+      - mysql-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================
+  # MySQL Replica 2 - Read-Only (Async)
+  # ============================================
+  mysql-replica-2:
+    image: mysql:8.0
+    container_name: mysql_replica_2
+    hostname: mysql-replica-2
+    restart: always
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql_replica2_data:/var/lib/mysql
+      - ./conf/replica/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+      - ./scripts/start-replica.sh:/docker-entrypoint-initdb.d/start-replica.sh
+    command:
+      - --server-id=3
+      - --log-bin=mysql-bin
+      - --binlog-format=ROW
+      - --gtid-mode=ON
+      - --enforce-gtid-consistency=ON
+      - --log-slave-updates=ON
+      - --read-only=ON
+      - --super-read-only=ON
+    networks:
+      - mysql-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ============================================
+  # ProxySQL - Connection Pooling & Load Balancing
+  # ============================================
+  proxysql:
+    image: proxysql/proxysql:2.5.5
+    container_name: proxysql
+    hostname: proxysql
+    restart: always
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+      mysql-replica-1:
+        condition: service_healthy
+      mysql-replica-2:
+        condition: service_healthy
+    ports:
+      - "6033:6033"   # MySQL Protocol
+      - "6032:6032"   # Admin Interface
+      - "6080:6080"   # Web Interface
+    volumes:
+      - ./conf/proxysql/proxysql.cnf:/etc/proxysql.cnf:ro
+      - proxysql_data:/var/lib/proxysql
+    networks:
+      - mysql-network
+    healthcheck:
+      test: ["CMD", "mysql", "-h", "127.0.0.1", "-P", "6033", "-u", "monitor", "-pmonitor", "-e", "SELECT 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ============================================
+  # Orchestrator - Automatic Failover Management
+  # ============================================
+  orchestrator:
+    image: openarkcode/orchestrator:latest
+    container_name: orchestrator
+    hostname: orchestrator
+    restart: always
+    depends_on:
+      mysql-primary:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      ORC_TOPOLOGY_USER: orchestrator
+      ORC_TOPOLOGY_PASSWORD: ${ORC_TOPOLOGY_PASSWORD:-orch_password}
+      ORC_DB_HOST: mysql-primary
+      ORC_DB_PORT: 3306
+      ORC_DB_NAME: orchestrator
+    volumes:
+      - ./conf/orchestrator/orchestrator.conf.json:/etc/orchestrator.conf.json:ro
+    networks:
+      - mysql-network
+
+  # ============================================
+  # Redis - Caching Layer (Issue #35)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: redis_cache
+    hostname: redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - mysql-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ============================================
+  # Redis Commander - Redis Web UI (optional)
+  # ============================================
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis_commander
+    hostname: redis-commander
+    restart: always
+    depends_on:
+      - redis
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    networks:
+      - mysql-network
+    profiles:
+      - debug
+
+networks:
+  mysql-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  mysql_primary_data:
+  mysql_replica1_data:
+  mysql_replica2_data:
+  proxysql_data:
+  redis_data:

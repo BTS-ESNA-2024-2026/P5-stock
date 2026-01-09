@@ -1,0 +1,59 @@
+# Ingress for P5-Stock
+# Issue #28: Security headers via Ingress annotations
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: p5stock-ingress
+  namespace: p5stock
+  labels:
+    app: p5stock
+  annotations:
+    # HTTPS redirect
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+      add_header X-Frame-Options "DENY" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';" always;
+      add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+    
+    # Rate limiting at ingress level
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    
+    # Proxy settings
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    
+    # WAF with ModSecurity (if enabled)
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/modsecurity-snippet: |
+      SecRuleEngine On
+      SecRule REQUEST_HEADERS:Content-Type "text/xml" "id:1,phase:1,t:none,t:lowercase,deny,status:403"
+    
+    # Certificate manager
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - p5stock.example.com
+      secretName: p5stock-tls
+  rules:
+    - host: p5stock.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: p5stock-app
+                port:
+                  number: 80

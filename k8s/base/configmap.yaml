@@ -1,0 +1,60 @@
+# ConfigMap for P5-Stock Application
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: p5stock-config
+  namespace: p5stock
+  labels:
+    app: p5stock
+data:
+  FLASK_ENV: "production"
+  FLASK_DEBUG: "0"
+  
+  # Database configuration (connect via ProxySQL)
+  DATABASE_HOST: "proxysql.p5stock.svc.cluster.local"
+  DATABASE_PORT: "6033"
+  DATABASE_NAME: "P5DB"
+  
+  # Redis configuration
+  REDIS_HOST: "redis.p5stock.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  
+  # Cache settings
+  CACHE_ENABLED: "true"
+  CACHE_DEFAULT_TTL: "300"
+  
+  # Rate limiting
+  RATELIMIT_ENABLED: "true"
+  RATELIMIT_DEFAULT: "10/second"
+  
+  # Security
+  CSRF_ENABLED: "true"
+  SESSION_COOKIE_SECURE: "true"
+  SESSION_COOKIE_HTTPONLY: "true"
+  SESSION_COOKIE_SAMESITE: "Strict"
+  
+  # Logging
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+---
+# Secrets template (apply with real values)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: p5stock-secrets
+  namespace: p5stock
+  labels:
+    app: p5stock
+type: Opaque
+stringData:
+  # Database credentials
+  DATABASE_USER: "app_user"
+  DATABASE_PASSWORD: "CHANGE_ME_IN_PRODUCTION"
+  
+  # Secret key for session signing
+  SECRET_KEY: "CHANGE_ME_IN_PRODUCTION"
+  
+  # JWT keys (base64 encoded)
+  JWT_PRIVATE_KEY: ""
+  JWT_PUBLIC_KEY: ""

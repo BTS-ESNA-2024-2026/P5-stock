@@ -1,0 +1,175 @@
+# P5-Stock Flask Application Deployment
+# Issues: #5 (HA 99.9%), #35 (Scalability)
+#
+# Features:
+# - Multi-replica deployment
+# - Rolling updates with zero downtime
+# - Resource limits and requests
+# - Liveness and readiness probes
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: p5stock-app
+  namespace: p5stock
+  labels:
+    app: p5stock
+    component: web
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: p5stock
+      component: web
+  template:
+    metadata:
+      labels:
+        app: p5stock
+        component: web
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: p5stock-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      
+      # Anti-affinity for HA across nodes
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: p5stock
+                topologyKey: kubernetes.io/hostname
+        # Spread across availability zones
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app: p5stock
+      
+      containers:
+        - name: p5stock
+          image: ghcr.io/bts-esna-2024-2026/p5-stock:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          
+          # Environment variables
+          envFrom:
+            - configMapRef:
+                name: p5stock-config
+            - secretRef:
+                name: p5stock-secrets
+          
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          
+          # Resource management
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          
+          # Health checks
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 30
+          
+          # Security context
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          
+          # Volume mounts
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: app-logs
+              mountPath: /app/logs
+      
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: app-logs
+          emptyDir: {}
+      
+      # Graceful shutdown
+      terminationGracePeriodSeconds: 30
+---
+# Service for internal communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: p5stock-app
+  namespace: p5stock
+  labels:
+    app: p5stock
+    component: web
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: p5stock
+    component: web
+---
+# Service Account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: p5stock-sa
+  namespace: p5stock
