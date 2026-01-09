@@ -3,7 +3,7 @@ from pathlib import Path
 from flask import Flask
 
 from src.core.routes.auth.login import auth_blueprint
-from src.core.routes.jsp import base_blueprint
+from src.core.routes.root import base_blueprint
 from dotenv import load_dotenv
 
 
