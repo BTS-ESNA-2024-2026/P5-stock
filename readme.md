@@ -36,8 +36,8 @@ openssl pkey -in private.pem -pubout -out public.pem
 ## Initialize database in docker
 The docker-compose will create the docker image and run init.sql to create and expose the database on 3306
 ```sh
-cd /database/mysql-docker
-docker compose up -d
+cd database/mysql-docker
+sudo docker compose --env-file ../../.env up -d
 docker ps # confirm creation of docker
 cd ../..
 ```
