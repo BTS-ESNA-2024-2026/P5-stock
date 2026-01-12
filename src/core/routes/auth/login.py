@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 import jwt
 from flask import Blueprint, render_template, request, make_response, jsonify
 
+from src.core.tools import get_user_by_username
+
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
 @auth_blueprint.get("/login")
@@ -13,7 +15,7 @@ def get_login():
 @auth_blueprint.post("/login")
 def post_login():
     data = request.form.to_dict()
-    #user = get_user_by_email(data["email"])
+    #user = get_user_by_username("SkyScube")
     #
     # if not user:
     #     return jsonify({
