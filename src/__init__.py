@@ -4,6 +4,7 @@ from flask import Flask
 
 from src.core.routes.auth.login import auth_blueprint
 from src.core.routes.root import base_blueprint
+from src.core.routes.assets.assets import assets_blueprint
 from dotenv import load_dotenv
 
 
@@ -14,4 +15,5 @@ def create_app():
     app = Flask(__name__)
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(base_blueprint)
+    app.register_blueprint(assets_blueprint)
     return app
