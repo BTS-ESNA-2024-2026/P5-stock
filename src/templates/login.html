@@ -7,69 +7,69 @@
     <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
-    <div class="shell">
-        <header class="topbar">
-            <div class="brand">
-                <span class="brand-mark">PSSTOCK</span>
-                <span class="brand-sub">secure access</span>
-            </div>
-            <div class="top-actions">
-                <span class="chip">Centre logistique</span>
-                <span class="chip">Acces securise</span>
-            </div>
-        </header>
+<div class="shell">
+    <header class="topbar">
+        <div class="brand">
+            <span class="brand-mark">PSSTOCK</span>
+            <span class="brand-sub">secure access</span>
+        </div>
+        <div class="top-actions">
+            <span class="chip">Centre logistique</span>
+            <span class="chip">Acces securise</span>
+        </div>
+    </header>
 
-        <main class="auth">
-            <div class="auth-card">
-                <div class="auth-header">
-                    <span class="brand-sub">Portail operationnel</span>
-                    <div class="auth-title">Connexion</div>
-                    <p class="subtitle">Acces au tableau de bord et a la supervision PSSTOCK.</p>
+    <main class="auth">
+        <div class="auth-card">
+            <div class="auth-header">
+                <span class="brand-sub">Portail operationnel</span>
+                <div class="auth-title">Connexion</div>
+                <p class="subtitle">Acces au tableau de bord et a la supervision PSSTOCK.</p>
+            </div>
+
+            <div id="error-container" class="mb-2"></div>
+
+            <form id="loginForm" action="/auth/login" method="POST">
+                <div class="form-group">
+                    <label for="email" class="form-label">Email</label>
+                    <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            required
+                            placeholder="Email"
+                            autocomplete="email"
+                    >
                 </div>
 
-                <div id="error-container" class="mb-2"></div>
-
-                <form id="loginForm" action="/auth/login" method="POST">
-                    <div class="form-group">
-                        <label for="email" class="form-label">Email</label>
-                        <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                required
-                                placeholder="Email"
-                                autocomplete="email"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password" class="form-label">Mot de passe</label>
-                        <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                required
-                                placeholder="Votre mot de passe"
-                                autocomplete="current-password"
-                        >
-                    </div>
-
-                    <div class="flex gap-1 mb-2" style="justify-content: space-between; align-items: center;">
-                        <span class="brand-sub">Authentification chiffree</span>
-                        <a href="#" class="subtitle" aria-label="Mot de passe oublie">Mot de passe oublie ?</a>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%;">
-                        Se connecter
-                    </button>
-                </form>
-
-                <div class="flex gap-1 mt-2" style="flex-wrap: wrap; justify-content: center;">
-                    <span class="chip">Tracabilite active</span>
-                    <span class="chip">Surveillance 24/7</span>
+                <div class="form-group">
+                    <label for="password" class="form-label">Mot de passe</label>
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            placeholder="Votre mot de passe"
+                            autocomplete="current-password"
+                    >
                 </div>
+
+                <div class="flex gap-1 mb-2" style="justify-content: space-between; align-items: center;">
+                    <span class="brand-sub">Authentification chiffree</span>
+                    <a href="#" class="subtitle" aria-label="Mot de passe oublie">Mot de passe oublie ?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%;">
+                    Se connecter
+                </button>
+            </form>
+
+            <div class="flex gap-1 mt-2" style="flex-wrap: wrap; justify-content: center;">
+                <span class="chip">Tracabilite active</span>
+                <span class="chip">Surveillance 24/7</span>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+</div>
 </body>
 </html>

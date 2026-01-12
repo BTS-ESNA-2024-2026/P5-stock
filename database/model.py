@@ -1,6 +1,7 @@
+import uuid
 from datetime import datetime
 from sqlalchemy import (
-    Boolean, DateTime, Enum, ForeignKey, Integer, SmallInteger, Text, String
+    Boolean, DateTime, Enum, ForeignKey, Integer, SmallInteger, Text, String, BigInteger
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional, List
@@ -31,7 +32,7 @@ class Role(Base):
 class User(Base):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     group_id: Mapped[int] = mapped_column(
         SmallInteger, ForeignKey("role.id"), nullable=False
     )
@@ -55,6 +56,20 @@ class User(Base):
     admin_logs: Mapped[List["LogAdmin"]] = relationship(
         back_populates="user", foreign_keys="LogAdmin.user_id"
     )
+
+    def __init__(self, username: str, group_id: int,
+        hash: str, hash_algorithm: str, name: Optional[str] = None,
+        MFA: Optional[str] = None, active: bool = True):
+        self.id = uuid.uuid1().int >> 64
+        self.username = username
+        self.group_id = group_id
+        self.DA = datetime.utcnow()
+        self.DE = datetime.utcnow()
+        self.hash = hash
+        self.hash_algorithm = hash_algorithm
+        self.name = name
+        self.MFA = MFA
+        self.active = active
 
 
 class Base_(Base):
@@ -229,7 +244,7 @@ class LogAdmin(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("user.id"), nullable=False
+        BigInteger, ForeignKey("user.id"), nullable=False
     )
     D: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     action: Mapped[str] = mapped_column(
