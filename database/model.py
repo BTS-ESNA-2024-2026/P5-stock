@@ -1,5 +1,7 @@
 import uuid
 from datetime import datetime
+
+from argon2 import PasswordHasher
 from sqlalchemy import (
     Boolean, DateTime, Enum, ForeignKey, Integer, SmallInteger, Text, String, BigInteger
 )
@@ -9,6 +11,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 
 db = SQLAlchemy()
+ph = PasswordHasher()
 
 class Base(DeclarativeBase):
     pass

@@ -1,6 +1,8 @@
 from typing import re
 
-from database.model import db, User
+from argon2.exceptions import VerifyMismatchError
+
+from database.model import db, User, ph
 
 
 def get_user_by_username(username):
@@ -15,3 +17,10 @@ def validate_username(username):
     if username.lower() in forbidden_words:
         return False
     return True
+
+def verify_password(plain: str, hashed: str) -> bool:
+    try:
+        ph.verify(hashed, plain)
+        return True
+    except VerifyMismatchError:
+        return False

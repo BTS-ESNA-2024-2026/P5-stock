@@ -1,16 +1,12 @@
-import uuid
 from datetime import datetime, timedelta
 
 import jwt
-from argon2 import PasswordHasher
 from flask import Blueprint, render_template, request, make_response, jsonify
 
-from database.model import db, User
-from src.core.tools import get_user_by_username, validate_username
+from database.model import db, User, ph
+from src.core.tools import get_user_by_username, validate_username, verify_password
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
-
-ph = PasswordHasher()
 
 @auth_blueprint.get("/login")
 def get_login():
@@ -22,7 +18,12 @@ def post_login():
     password = request.form.get('password')
     user = get_user_by_username(username)
     print(password)
-    if not user or not ph.verify(password, user.Password):
+    print(user.hash)
+    if not verify_password(password, user.hash):
+        return jsonify({
+            'message': 'Email or password incorrect',
+        }), 401
+    if not user:
         return make_response(jsonify({
             'message': 'Email or password incorrect'
         }), 401)
