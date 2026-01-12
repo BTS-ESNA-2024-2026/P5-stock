@@ -6,7 +6,7 @@ from argon2 import PasswordHasher
 from flask import Blueprint, render_template, request, make_response, jsonify
 
 from database.model import db, User
-from src.core.tools import get_user_by_username
+from src.core.tools import get_user_by_username, validate_username
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -64,6 +64,10 @@ def post_register():
         return make_response(jsonify({
             'message': 'User already exists'
         }), 401)
+    if not validate_username(username):
+        return make_response(jsonify({
+            'message': 'Username needs to be alphanumeric'
+        }),401)
     try:
         user = User(
             group_id=5,
