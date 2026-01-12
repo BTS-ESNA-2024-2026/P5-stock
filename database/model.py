@@ -4,7 +4,10 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional, List
+from flask_sqlalchemy import SQLAlchemy
 
+
+db = SQLAlchemy()
 
 class Base(DeclarativeBase):
     pass
