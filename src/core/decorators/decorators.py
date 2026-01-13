@@ -22,7 +22,6 @@ def require_jwt(f):
         try:
             payload = jwt.decode(token, public_key, algorithms=['RS256'])
             request.user_data = payload
-            print(request.user_data)
 
         except jwt.ExpiredSignatureError:
             print("Token expired")
