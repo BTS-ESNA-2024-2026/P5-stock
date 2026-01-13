@@ -6,7 +6,6 @@ base_blueprint = Blueprint("base", __name__)
 
 
 @base_blueprint.route("/")
-@require_user
 def root():
     return render_template("root.html")
 
