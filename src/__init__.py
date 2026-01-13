@@ -4,7 +4,7 @@ from flask import Flask
 
 from database.config import Config
 from database.model import db
-from src.core.routes.auth.login import auth_blueprint
+from src.core.routes.auth.auth import auth_blueprint
 from src.core.routes.root import base_blueprint
 from src.core.routes.assets.assets import assets_blueprint
 from dotenv import load_dotenv
