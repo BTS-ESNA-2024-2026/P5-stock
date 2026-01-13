@@ -1,11 +1,12 @@
 from flask import Blueprint, render_template
 
-from src.core.decorators.decorators import require_jwt
+from src.core.decorators.decorators import require_jwt, require_viewer, require_user
 
 base_blueprint = Blueprint("base", __name__)
 
 
 @base_blueprint.route("/")
+@require_user
 def root():
     return render_template("root.html")
 
