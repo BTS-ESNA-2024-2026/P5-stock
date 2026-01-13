@@ -6,6 +6,10 @@ base_blueprint = Blueprint("base", __name__)
 
 
 @base_blueprint.route("/")
+def root():
+    return render_template("root.html")
+
+@base_blueprint.route("/dashboard")
 @require_jwt
-def index():
+def dash():
     return render_template("dashboard.html")
