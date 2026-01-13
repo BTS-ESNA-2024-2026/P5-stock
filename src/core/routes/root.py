@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template
 
-from src.core.decorators.decorators import require_jwt
+from src.core.decorators.decorators import require_jwt, require_viewer, require_user
 
 base_blueprint = Blueprint("base", __name__)
 
