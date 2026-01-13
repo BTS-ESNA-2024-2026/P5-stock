@@ -10,7 +10,7 @@ services:
     tty: true
     working_dir: /workspaces/P5-stock
     environment:
-      DATABASE_URL: pymysql://root:rootpassword@mysql:3306/P5DB
+      DATABASE_URL: mysql+pymysql://root:rootpassword@mysql:3306/P5DB
     command: /bin/sh -c "while sleep 1000; do :; done"
 
   mysql:
