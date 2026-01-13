@@ -19,43 +19,50 @@
             </div>
         </header>
 
-        <main class="auth">
-            <a href="/auth/login">login</a>
-            <a href="/dashboard">dashboard</a>
+    <main class="asset">
+        <form id="addAssetForm" action="/tmp-assets" method="POST">
+                <div class="form-group">
+                    <label for="type" class="form-label">Type of the asset</label>
+                    <input
+                            id="type"
+                            name="type"
+                            placeholder="type"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="name" class="form-label">name</label>
+                    <input
+                            id="name"
+                            name="name"
+                            placeholder="asset name"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="shelf" class="form-label">shelf</label>
+                    <input
+                            id="shelf"
+                            name="shelf"
+                            placeholder="shelf/precise location"
+                    >
+
+                <div class="form-group">
+                    <label for="status" class="form-label">status</label>
+                    <input
+                            id="status"
+                            name="status"
+                            placeholder="status of the asset"
+                    >
+                </div>
+
+
+                <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%;">
+                    create asset
+                </button>
+            </form>
         </main>
     </div>
-    <form id="loginForm" action="/tmp-assets" method="POST">
-        <div class="form-group">
-            <label for="email" class="form-label">Email</label>
-            <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    placeholder="Email"
-                    autocomplete="email"
-            >
-        </div>
-
-        <div class="form-group">
-            <label for="password" class="form-label">Mot de passe</label>
-            <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    required
-                    placeholder="Votre mot de passe"
-                    autocomplete="current-password"
-            >
-        </div>
-
-        <div class="flex gap-1 mb-2" style="justify-content: space-between; align-items: center;">
-            <span class="brand-sub">Authentification chiffree</span>
-        </div>
-
-        <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%;">
-            Se connecter
-        </button>
-    </form>
+    
 </body>
 </html>

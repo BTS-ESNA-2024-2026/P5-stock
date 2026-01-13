@@ -9,11 +9,11 @@ base_blueprint = Blueprint("base", __name__)
 def root():
     return render_template("root.html")
 
-@base_blueprint.route('/favicon.ico')
+@base_blueprint.route('/favicon.ico') # required for *soup* reasons
 def favicon():
-    return send_from_directory('static', 'favicon.ico')
+    return send_from_directory('static', 'favicon.ico') # <-- soup
 
 @base_blueprint.route("/dashboard")
-@require_jwt
+#@require_jwt
 def dash():
     return render_template("dashboard.html")

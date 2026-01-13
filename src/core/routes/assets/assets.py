@@ -7,16 +7,16 @@ from flask import Blueprint, render_template, request, make_response, jsonify
 assets_blueprint = Blueprint("assets", __name__)
 
 @assets_blueprint.get("/tmp-assets")
-@require_jwt
+#@require_jwt
 def get_login():
     return render_template("tmp-assets.html")
 
 @assets_blueprint.post("/tmp-assets") #temporary TMP
-@require_jwt
+#@require_jwt
 def insert_asset():
     data = request.form.to_dict()
     print(data)
-
+    return {"oui?": "en effet"}
 
 
     #user = get_user_by_email(data["email"])
