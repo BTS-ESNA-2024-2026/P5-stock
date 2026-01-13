@@ -53,6 +53,5 @@ def jwt_decode(request):
         print(token)
         print(e)
         return False
-    print(request.user_data['user_id'])
     return get_user_by_id(request.user_data['user_id'])
 
