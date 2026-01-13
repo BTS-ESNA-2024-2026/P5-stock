@@ -1,4 +1,4 @@
-from typing import re
+import re
 
 import jwt
 from argon2.exceptions import VerifyMismatchError
