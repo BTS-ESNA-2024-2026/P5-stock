@@ -17,8 +17,6 @@ def post_login():
     username = request.form.get('username')
     password = request.form.get('password')
     user = get_user_by_username(username)
-    print(password)
-    print(user.hash)
     if not verify_password(password, user.hash):
         return jsonify({
             'message': 'Email or password incorrect',
