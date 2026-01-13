@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, send_from_directory
-
 from src.core.decorators.decorators import require_jwt, require_viewer, require_user
+from loguru import logger
 
 base_blueprint = Blueprint("base", __name__)
 

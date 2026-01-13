@@ -1,9 +1,9 @@
 from pathlib import Path
-
 from flask import Flask
 
 from database.config import Config
 from database.model import db
+from src.core.logs import setup_logger
 from src.core.routes.auth.auth import auth_blueprint
 from src.core.routes.root import base_blueprint
 from src.core.routes.assets.assets import assets_blueprint
@@ -17,6 +17,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
+    setup_logger(app)
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(base_blueprint)
     app.register_blueprint(assets_blueprint)
