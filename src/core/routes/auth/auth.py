@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import jwt
-from flask import Blueprint, render_template, request, make_response, jsonify, redirect, url_for
+from flask import Blueprint, render_template, request, make_response, jsonify, redirect
 
 from database.model import db, User, ph
 from src.core.tools import get_user_by_username, validate_username, verify_password

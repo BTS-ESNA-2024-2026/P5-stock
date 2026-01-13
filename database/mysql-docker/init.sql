@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS `role` (
 CREATE TABLE IF NOT EXISTS `log_admin` (
 	`id` INTEGER NOT NULL AUTO_INCREMENT UNIQUE,
 	`user_id` BIGINT NOT NULL,
-	`user_id` BIGINT NOT NULL,
 	`D` DATETIME NOT NULL,
 	`action` ENUM('CREATED', 'DELETED', 'EDITED', 'DEACTIVATED', 'ACTIVATED') NOT NULL COMMENT 'renamed john to martha',
 	`desc` TEXT,
@@ -246,12 +245,6 @@ VALUES (
   '-',
   '-',
   NULL
-);
-
-INSERT INTO `asset_type` (`id`, `type`)
-VALUES (
-  1,
-  "letutur"
 );
 
 -- ----------------------------------------------------------------------------
