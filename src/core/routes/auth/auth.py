@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, make_response, jsonify
 from loguru import logger
 
 from database.model import db, User, ph
-from src import limiter
+from src.core.config import limiter
 from src.core.decorators.decorators import require_admin
 from src.core.tools import get_user_by_username, validate_username, verify_password
 
@@ -21,14 +21,11 @@ def post_login():
     username = request.form.get('username')
     password = request.form.get('password')
     user = get_user_by_username(username)
-    if not verify_password(password, user.hash):
+    if not user or not verify_password(password, user.hash):
         return jsonify({
             'message': 'Email or password incorrect',
         }), 401
-    if not user:
-        return make_response(jsonify({
-            'message': 'Email or password incorrect'
-        }), 401)
+
 
     access_payload = {
             'user_id': user.id,

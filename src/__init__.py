@@ -1,10 +1,9 @@
 from pathlib import Path
 from flask import Flask
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 
 from database.config import Config
 from database.model import db
+from src.core.config import limiter
 from src.core.logs import setup_logger
 from src.core.middleware import register_middleware
 from src.core.routes.auth.auth import auth_blueprint
@@ -15,11 +14,6 @@ from dotenv import load_dotenv
 
 env_path = Path(__file__).parent.parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["2 per second", "1000 per day"],
-    storage_uri="memory://",  # Redis en prod
-)
 
 def create_app():
     app = Flask(__name__)
