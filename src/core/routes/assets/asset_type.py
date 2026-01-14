@@ -10,10 +10,10 @@ asset_type_blueprint = Blueprint("asset_type", __name__)
 @require_user
 def post_asset_type():
     TYPE = request.json.get("type")
-    # Fonction qui vérifie si name entre 2 et 25 caractère uniquement alphanumérique
+    # Fonction qui vérifie si name entre 2 et 35 caractère uniquement alphanumérique
     if not TYPE or not validate_username(TYPE):
         return make_response(jsonify({
-            'message': 'Type needs to be alphanumeric and between 2 and 25 characters'
+            'message': 'Type needs to be alphanumeric and between 2 and 35 characters'
         }), 400)
     asset_type = get_asset_type_by_type(TYPE)
     if asset_type :

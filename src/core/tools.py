@@ -16,7 +16,7 @@ def get_asset_type_by_type(asset_type):
     return db.session.query(AssetType).filter(AssetType.type == asset_type).first()
 
 def validate_username(username):
-    if len(username) < 2 or len(username) > 25:
+    if len(username) < 2 or len(username) > 35:
         return False
     if not re.match(r'^[a-zA-Z0-9_-]+$', username):
         return False

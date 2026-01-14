@@ -1,11 +1,7 @@
-#import os
-#from datetime import datetime, timedelta
 from loguru import logger
-
 from database.model import db, Spec
-from src.core.decorators.decorators import require_jwt, require_user
-from flask import Blueprint, render_template, request, make_response, jsonify
-
+from src.core.decorators.decorators import require_user
+from flask import Blueprint, request, make_response, jsonify
 from src.core.tools import validate_username
 
 specs_blueprint = Blueprint("specs", __name__)
@@ -15,10 +11,10 @@ specs_blueprint = Blueprint("specs", __name__)
 def post_specs():
     type_id = request.json.get('type_id')
     name = request.json.get('name')
-    #Fonction qui vérifie si name entre 2 et 25 caractère uniquement alphanumérique
+    #Fonction qui vérifie si name entre 2 et 35 caractère uniquement alphanumérique
     if not name or not validate_username(name):
         return make_response(jsonify({
-            'message': 'Username needs to be alphanumeric and between 2 and 25 characters'
+            'message': 'Name needs to be alphanumeric and between 2 and 35 characters'
         }), 400)
     try:
         specs = Spec(type_id=type_id, name=name)
@@ -32,6 +28,6 @@ def post_specs():
         logger.error(f"Failed to create new spec: {e}")
         return jsonify({
             'message': 'Failed to create new spec',
-        }), 401
+        }), 400
 
 

@@ -1,7 +1,7 @@
 from src.core.decorators.decorators import require_user
 from database.model import db, Value
 from loguru import logger
-from flask import Blueprint, render_template, request, make_response, jsonify
+from flask import Blueprint, request, make_response, jsonify
 from datetime import datetime
 
 values_blueprint = Blueprint("values", __name__)
