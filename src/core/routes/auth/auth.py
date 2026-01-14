@@ -18,37 +18,43 @@ def get_login():
 @auth_blueprint.post("/login")
 @limiter.limit("5 per minute")
 def post_login():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    user = get_user_by_username(username)
-    if not user or not verify_password(password, user.hash):
+    try:
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = get_user_by_username(username)
+        if not user or not verify_password(password, user.hash):
+            return jsonify({
+                'message': 'Email or password incorrect',
+            }), 401
+
+
+        access_payload = {
+                'user_id': user.id,
+                'exp': datetime.utcnow() + timedelta(minutes=10),
+                'iat': datetime.utcnow(),
+                'type': 'access'
+            }
+        private_key = open('private.pem', 'rb').read()
+        access_token = jwt.encode(access_payload, private_key, algorithm='RS256')
+        response = make_response(jsonify({
+                'message': 'Login successful',
+            }), 200)
+        response.set_cookie(
+                'access_token',
+                access_token,
+                httponly=True,  # Prevent XSS
+                secure=True,  # HTTPS only (ANSSI required)
+                samesite='Strict',  # CSRF protection (ANSSI required)
+                max_age=10 * 60,  # 10 minutes
+                path='/'  # Explicit path
+            )
+        logger.info(f"{user.id} logged in")
+        return response
+    except Exception as e:
+        logger.error(f"{e}")
         return jsonify({
-            'message': 'Email or password incorrect',
-        }), 401
-
-
-    access_payload = {
-            'user_id': user.id,
-            'exp': datetime.utcnow() + timedelta(minutes=10),
-            'iat': datetime.utcnow(),
-            'type': 'access'
-        }
-    private_key = open('private.pem', 'rb').read()
-    access_token = jwt.encode(access_payload, private_key, algorithm='RS256')
-    response = make_response(jsonify({
-            'message': 'Login successful',
-        }), 200)
-    response.set_cookie(
-            'access_token',
-            access_token,
-            httponly=True,  # Prevent XSS
-            secure=True,  # HTTPS only (ANSSI required)
-            samesite='Strict',  # CSRF protection (ANSSI required)
-            max_age=10 * 60,  # 10 minutes
-            path='/'  # Explicit path
-        )
-    logger.info(f"{user.id} logged in")
-    return response
+            'message': 'Internal server error',
+        }), 500
 
 @auth_blueprint.post("/register")
 @require_admin
