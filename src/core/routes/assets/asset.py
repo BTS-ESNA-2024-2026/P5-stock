@@ -16,11 +16,12 @@ def insert_asset():
             if data["status"] in ['STOCK', 'DESTROYED', 'SOLD', 'LOST', 'TRANSIT', 'PURCHASED']:
                 asset = Asset(
                     type_asset_id=data["asset_type_id"], # required is dict["var"], optional is dict.get("var") and return none if it doesn't exist
-                    room_id=data.get("room_id"),
+                    room_id=data.get("room_id"), # no mission ID on create
                     DA = datetime.utcnow(),
                     DE = datetime.utcnow(),
-                    status = data["status"],
                     name = data["name"],
+                    number=data.get("number"),
+                    status = data["status"],
                     quantity=data.get("quantity"),
                     shelf=data.get("shelf"),
                     sensible=data.get("sensible")
@@ -49,9 +50,16 @@ def insert_asset():
                 'error': 'foreign key constraint failed, please verify IDs',
                 'status': 'error'
             }), 406
-        logger.info(f"New asset by {user.id} : {asset.id}/{asset.name}")
+        except Exception as e :
+            logger.error(f"Couldn't create asset : {e}")
+            return jsonify({
+                'error': 'Internal server error',
+                'status': 'error'
+            }), 500
+        logger.info(f"New asset by {request.current_user.id} : {asset.id}/{asset.name}")
         return jsonify({
-            'message': 'Asset created'
+            'message': 'Asset created',
+            'status': 'success'
         }), 201
 
     except TypeError as e:
