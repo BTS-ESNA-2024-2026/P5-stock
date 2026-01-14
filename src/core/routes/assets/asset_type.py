@@ -16,12 +16,12 @@ def post_specs():
     if not TYPE or not validate_username(TYPE):
         return make_response(jsonify({
             'message': 'Type needs to be alphanumeric and between 2 and 25 characters'
-        }), 401)
+        }), 400)
     asset_type = get_asset_type_by_type(TYPE)
     if asset_type :
         return make_response(jsonify({
             'message': 'Type already exists'
-        }), 401)
+        }), 400)
     try:
         asset_type = AssetType(type=TYPE)
         db.session.add(asset_type)

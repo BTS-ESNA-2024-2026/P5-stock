@@ -8,6 +8,7 @@ from src.core.logs import setup_logger
 from src.core.middleware import register_middleware
 from src.core.routes.assets.asset_type import asset_type_blueprint
 from src.core.routes.assets.specs import specs_blueprint
+from src.core.routes.assets.value import values_blueprint
 from src.core.routes.auth.auth import auth_blueprint
 from src.core.routes.root import base_blueprint
 from src.core.routes.assets.asset import assets_blueprint
@@ -29,4 +30,5 @@ def create_app():
     app.register_blueprint(base_blueprint)
     app.register_blueprint(assets_blueprint)
     app.register_blueprint(specs_blueprint)
+    app.register_blueprint(values_blueprint)
     return app

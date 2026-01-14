@@ -1,49 +1,56 @@
 from src.core.decorators.decorators import require_user
-from database.model import db, Asset
+from database.model import db, Value
 from loguru import logger
 from flask import Blueprint, render_template, request, make_response, jsonify
 from datetime import datetime
 
-assets_blueprint = Blueprint("assets", __name__)
+values_blueprint = Blueprint("values", __name__)
 
-@assets_blueprint.post("/value")
+@values_blueprint.post("/value")
 @require_user
-def insert_asset():
+def insert_value():
     try:
         data = request.json
         try :
-            asset = Asset(
-                asset_id=data["asset_type_id"], # required is dict["var"], optional is dict.get("var") and return none if it doesn't exist
-                spec_id=data.get("room_id"),
+            value = Value(
+                asset_id=data["asset_id"],
+                spec_id=data["spec_id"],
                 DA = datetime.utcnow(),
                 DE = datetime.utcnow(),
                 value = data["value"],
             )
 
         except KeyError as e:
-            logger.error(f"Couldn't create asset, missing fields : {e}")
+            logger.error(f"Couldn't create value, missing fields : {e}")
             return jsonify({
                 'error': 'Missing required fields',
                 'status': 'error'
-            }), 406
+            }), 400
 
-        db.session.add(asset)
+        db.session.add(value)
         try :
             db.session.commit()
         except IntegrityError as e :
-            logger.error(f"Couldn't create asset, invalid foreing key : {e}")
+            logger.error(f"Couldn't create value, invalid foreing key : {e}")
             return jsonify({
                 'error': 'foreign key constraint failed, please verify IDs',
                 'status': 'error'
-            }), 406
-        logger.info(f"New asset by {user.id} : {asset.id}/{asset.name}")
+            }), 400
+        except Exception as e :
+            logger.error(f"Couldn't create value, unknown error : {e}")
+            return jsonify({
+                'error': 'Internal server error',
+                'status': 'error'
+            }), 500
+        logger.info(f"New value by {request.current_user.id} : {value.id}")
         return jsonify({
-            'message': 'Asset created'
+            'message': 'Value created',
+            'status': 'success'
         }), 201
 
     except TypeError as e:
-        logger.error(f"Couldn't create asset : {e}")
+        logger.error(f"Couldn't create value : {e}")
         return jsonify({
-            'error': "Internal server error on asset creation",
+            'error': "Internal server error on value creation",
             'status': 'error'
         }), 500

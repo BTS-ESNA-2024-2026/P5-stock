@@ -32,14 +32,14 @@ def insert_asset():
                 return jsonify({
                     'error': 'status must be "STOCK", "DESTROYED", "SOLD", "LOST", "TRANSIT" or "PURCHASED"',
                     'status': 'error'
-                }), 406
+                }), 400
 
         except KeyError as e:
             logger.error(f"Couldn't create asset, missing fields : {e}")
             return jsonify({
                 'error': 'Missing required fields',
                 'status': 'error'
-            }), 406
+            }), 400
 
         db.session.add(asset)
         try :
@@ -49,7 +49,7 @@ def insert_asset():
             return jsonify({
                 'error': 'foreign key constraint failed, please verify IDs',
                 'status': 'error'
-            }), 406
+            }), 400
         except Exception as e :
             logger.error(f"Couldn't create asset : {e}")
             return jsonify({
