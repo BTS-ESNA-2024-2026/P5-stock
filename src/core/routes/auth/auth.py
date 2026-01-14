@@ -24,9 +24,8 @@ def post_login():
         user = get_user_by_username(username)
         if not user or not verify_password(password, user.hash):
             return jsonify({
-                'message': 'Email or password incorrect',
+                'message': 'Username or password incorrect',
             }), 401
-
 
         access_payload = {
                 'user_id': user.id,
@@ -57,7 +56,6 @@ def post_login():
         }), 500
 
 @auth_blueprint.post("/register")
-@require_admin
 def post_register():
     username = request.json.get('username')
     name = request.json.get('name')

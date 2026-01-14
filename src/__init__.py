@@ -6,6 +6,8 @@ from database.model import db
 from src.core.config import limiter
 from src.core.logs import setup_logger
 from src.core.middleware import register_middleware
+from src.core.routes.assets.asset_type import asset_type_blueprint
+from src.core.routes.assets.specs import specs_blueprint
 from src.core.routes.auth.auth import auth_blueprint
 from src.core.routes.root import base_blueprint
 from src.core.routes.assets.asset import assets_blueprint
@@ -23,6 +25,8 @@ def create_app():
     limiter.init_app(app)
     register_middleware(app)
     app.register_blueprint(auth_blueprint)
+    app.register_blueprint(asset_type_blueprint)
     app.register_blueprint(base_blueprint)
     app.register_blueprint(assets_blueprint)
+    app.register_blueprint(specs_blueprint)
     return app
