@@ -1,16 +1,14 @@
 from loguru import logger
-
-from database.model import db, Spec, AssetType
-from src.core.decorators.decorators import require_jwt, require_user
-from flask import Blueprint, render_template, request, make_response, jsonify
-
+from database.model import db, AssetType
+from src.core.decorators.decorators import require_user
+from flask import Blueprint, request, make_response, jsonify
 from src.core.tools import validate_username, get_asset_type_by_type
 
 asset_type_blueprint = Blueprint("asset_type", __name__)
 
 @asset_type_blueprint.post("/asset_type")
 @require_user
-def post_specs():
+def post_asset_type():
     TYPE = request.json.get("type")
     # Fonction qui vérifie si name entre 2 et 25 caractère uniquement alphanumérique
     if not TYPE or not validate_username(TYPE):
