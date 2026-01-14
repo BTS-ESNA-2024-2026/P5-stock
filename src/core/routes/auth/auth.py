@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta
 
 import jwt
-from flask import Blueprint, render_template, request, make_response, jsonify, redirect
+from flask import Blueprint, render_template, request, make_response, jsonify
+from loguru import logger
 
 from database.model import db, User, ph
+from src import limiter
+from src.core.decorators.decorators import require_admin
 from src.core.tools import get_user_by_username, validate_username, verify_password
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
@@ -13,6 +16,7 @@ def get_login():
     return render_template("login.html")
 
 @auth_blueprint.post("/login")
+@limiter.limit("5 per minute")
 def post_login():
     username = request.form.get('username')
     password = request.form.get('password')
@@ -37,8 +41,6 @@ def post_login():
     response = make_response(jsonify({
             'message': 'Login successful',
         }), 200)
-
-    response = make_response(redirect('/'))
     response.set_cookie(
             'access_token',
             access_token,
@@ -48,9 +50,11 @@ def post_login():
             max_age=10 * 60,  # 10 minutes
             path='/'  # Explicit path
         )
+    logger.info(f"{user.id} logged in")
     return response
 
 @auth_blueprint.post("/register")
+@require_admin
 def post_register():
     username = request.json.get('username')
     name = request.json.get('name')
@@ -79,11 +83,13 @@ def post_register():
         )
         db.session.add(user)
         db.session.commit()
+        logger.info(f"New user created : {user.id}")
         return jsonify({
             'message': 'Account created successfully'
         }), 201
+
     except Exception as e:
-        print(e)
+        logger.error(e)
         return jsonify({
             'message': 'Internal Server Error',
         }), 500
