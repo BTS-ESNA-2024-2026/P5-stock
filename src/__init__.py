@@ -8,7 +8,7 @@ from src.core.logs import setup_logger
 from src.core.middleware import register_middleware
 from src.core.routes.auth.auth import auth_blueprint
 from src.core.routes.root import base_blueprint
-from src.core.routes.assets.assets import assets_blueprint
+from src.core.routes.assets.asset import assets_blueprint
 from dotenv import load_dotenv
 
 
