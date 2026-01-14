@@ -57,7 +57,7 @@ def post_login():
         }), 500
 
 @auth_blueprint.post("/register")
-@require_admin
+#@require_admin()
 def post_register():
     username = request.json.get('username')
     name = request.json.get('name')
