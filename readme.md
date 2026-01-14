@@ -51,8 +51,7 @@ flask --app src run --debug # includes hot reload, /!\ do not use in production
 ```
 
 ## log in the application (get token)
-in /auth/login
+create user then login
 ```
-test@p5stock.fr
-Sup€rP@ssw0rd
+
 ```
