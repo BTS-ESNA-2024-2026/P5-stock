@@ -247,6 +247,20 @@ VALUES (
   NULL
 );
 
+-- default admin user user
+INSERT INTO `user` (`group_id`, `DA`, `DE`, `active`, `username`, `name`, `hash`, `hash_algorithm`, `MFA`)
+VALUES (
+  1,
+  NOW(),
+  NOW(),
+  TRUE,
+  'defadm',
+  'default admin',
+  '$argon2id$v=19$m=65536,t=3,p=4$nLDw1TlJlTp2XlP3KZZjxQ$kpNEHHi5VRLsRD3eqIu+uFobDa1qWUIWgMx8RZ1bnwU',
+  'argon2',
+  NULL
+);
+
 -- ----------------------------------------------------------------------------
 -- TRIGGERS POUR LA TABLE ASSET
 -- ----------------------------------------------------------------------------

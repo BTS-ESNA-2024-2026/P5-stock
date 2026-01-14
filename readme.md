@@ -34,10 +34,10 @@ openssl pkey -in private.pem -pubout -out public.pem
 ```
 
 ## Initialize database in docker
-The docker-compose will create the docker image and run init.sql to create and expose the database on 3306
+The docker-compose will create the docker image and run init.sql to create and expose the database. Use `sudo` if required
 ```sh
 cd database/mysql-docker
-sudo docker compose up -d
+docker compose --env-file ../../.env up
 docker ps # confirm creation of docker
 cd ../..
 ```
@@ -51,7 +51,8 @@ flask --app src run --debug # includes hot reload, /!\ do not use in production
 ```
 
 ## log in the application (get token)
-create user then login
+login using /auth/login
 ```
-
+defadmin
+yaa
 ```
