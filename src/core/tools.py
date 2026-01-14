@@ -18,6 +18,9 @@ def get_asset_type_by_type(asset_type):
 def validate_username(username):
     if len(username) < 2 or len(username) > 35:
         return False
+    forbidden_words = ['admin', 'root', 'system', 'null', 'undefined', 'select', 'drop', 'insert']
+    if username.lower() in forbidden_words:
+        return False
     if not re.match(r'^[a-zA-Z0-9_-]+$', username):
         return False
     return True
