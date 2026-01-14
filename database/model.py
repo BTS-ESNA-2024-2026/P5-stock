@@ -63,7 +63,7 @@ class User(Base):
     def __init__(self, username: str, group_id: int,
         hash: str, hash_algorithm: str, name: Optional[str] = None,
         MFA: Optional[str] = None, active: bool = True):
-        self.id = uuid.uuid4().int >> 64
+        self.id = uuid.uuid4().int & ((1 << 63) - 1)
         self.username = username
         self.group_id = group_id
         self.DA = datetime.utcnow()
