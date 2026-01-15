@@ -1,8 +1,6 @@
 import re
-
 import jwt
 from argon2.exceptions import VerifyMismatchError
-
 from database.model import db, User, ph, AssetType
 
 

@@ -14,7 +14,7 @@ from src.core.routes.assets.value import values_blueprint
 from src.core.routes.auth.auth import auth_blueprint
 from src.core.routes.assets.asset import assets_blueprint
 from src.core.routes.assets.base import base_blueprint
-from src.core.routes.assets.room import room_blueprint
+from src.core.routes.CRUD.room import room_blueprint
 
 
 
