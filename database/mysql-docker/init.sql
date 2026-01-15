@@ -234,8 +234,9 @@ VALUES (
 );
 
 -- system user
-INSERT INTO `user` (`group_id`, `DA`, `DE`, `active`, `username`, `name`, `hash`, `hash_algorithm`, `MFA`)
+INSERT INTO `user` (`id`, `group_id`, `DA`, `DE`, `active`, `username`, `name`, `hash`, `hash_algorithm`, `MFA`)
 VALUES (
+  8689517923659752,
   1,
   NOW(),
   NOW(),
@@ -248,8 +249,9 @@ VALUES (
 );
 
 -- default admin user user
-INSERT INTO `user` (`group_id`, `DA`, `DE`, `active`, `username`, `name`, `hash`, `hash_algorithm`, `MFA`)
+INSERT INTO `user` (`id`, `group_id`, `DA`, `DE`, `active`, `username`, `name`, `hash`, `hash_algorithm`, `MFA`)
 VALUES (
+  8923659752,
   1,
   NOW(),
   NOW(),
