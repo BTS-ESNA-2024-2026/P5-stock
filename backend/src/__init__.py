@@ -1,0 +1,40 @@
+from pathlib import Path
+from flask import Flask
+from database.config import Config
+from database.model import db
+from src.core.config import limiter
+from src.core.logs import setup_logger
+from src.core.middleware import register_middleware
+from dotenv import load_dotenv
+
+from src.core.routes.root import root_blueprint
+from src.core.routes.assets.asset_type import asset_type_blueprint
+from src.core.routes.assets.specs import specs_blueprint
+from src.core.routes.assets.value import values_blueprint
+from src.core.routes.auth.auth import auth_blueprint
+from src.core.routes.assets.asset import assets_blueprint
+from src.core.routes.assets.base import base_blueprint
+from src.core.routes.assets.room import room_blueprint
+
+
+
+env_path = Path(__file__).parent.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
+def create_app():
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    db.init_app(app)
+    setup_logger(app)
+    limiter.init_app(app)
+    register_middleware(app)
+
+    app.register_blueprint(root_blueprint)
+    app.register_blueprint(auth_blueprint)
+    app.register_blueprint(asset_type_blueprint)
+    app.register_blueprint(base_blueprint)
+    app.register_blueprint(assets_blueprint)
+    app.register_blueprint(specs_blueprint)
+    app.register_blueprint(values_blueprint)
+    app.register_blueprint(room_blueprint)
+    return app
