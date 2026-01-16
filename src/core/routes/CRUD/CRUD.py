@@ -1,5 +1,5 @@
 from src.core.decorators.decorators import *
-from database.model import db, Room
+from database.model import db, Room, Base_, Asset
 from flask import Blueprint, request
 from src.core.routes.CRUD.CRUD_tools import create, read, update, delete
 
@@ -8,7 +8,7 @@ CRUD = Blueprint("CRUD", __name__)
 # - - - - - - - - ROOM - - - - - - - - 
 @CRUD.post("/room")
 @require_technician
-def insert_base():
+def insert_room():
     element = "room"
     required_fields = ["base_id", "room"]
     accetpable_fields = []
@@ -52,7 +52,7 @@ def insert_base():
     element = "base"
     required_fields = ["name", "address"]
     accetpable_fields = []
-    obj = base()
+    obj = Base_()
 
     data = request.json
     return create(element, required_fields, accetpable_fields, data, obj)
@@ -61,7 +61,7 @@ def insert_base():
 @require_technician
 def get_base(ID):
     element = "base"
-    obj = db.session.query(base).filter(base.id == ID).first()
+    obj = db.session.query(Base_).filter(Base_.id == ID).first()
 
     return read(ID, element, obj)
 
@@ -70,7 +70,7 @@ def get_base(ID):
 def update_base(ID):
     element = "base"
     updatable_fields = ['name', 'address']
-    obj = db.session.query(base).filter(base.id == ID).first()
+    obj = db.session.query(Base_).filter(Base_.id == ID).first()
 
     data = request.json
     return update(ID, element, updatable_fields, data, obj)
@@ -79,7 +79,7 @@ def update_base(ID):
 @require_technician
 def delete_base(ID):
     element = "base"
-    obj = db.session.query(base).filter(base.id == ID).first()
+    obj = db.session.query(Base_).filter(Base_.id == ID).first()
 
     return delete(ID, element, obj)
 
@@ -92,7 +92,7 @@ def delete_base(ID):
 # - - - - - - - - ASSET - - - - - - - - 
 @CRUD.post("/asset")
 @require_technician
-def insert_base():
+def insert_asset():
     element = "asset"
     required_fields = ["type_asset_id", "name", "status"]
     accetpable_fields = ["mission_id", "room_id", "number", "quantity", "shelf", "sensible"]

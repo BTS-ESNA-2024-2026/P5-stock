@@ -19,6 +19,7 @@ def get_login():
 @limiter.limit("5 per minute")
 def post_login():
     try:
+        age=20 # minutes
         username = request.form.get('username')
         password = request.form.get('password')
         user = get_user_by_username(username)
@@ -29,7 +30,7 @@ def post_login():
 
         access_payload = {
                 'user_id': user.id,
-                'exp': datetime.utcnow() + timedelta(minutes=10),
+                'exp': datetime.utcnow() + timedelta(minutes=age),
                 'iat': datetime.utcnow(),
                 'type': 'access'
             }
@@ -44,7 +45,7 @@ def post_login():
                 httponly=True,  # Prevent XSS
                 secure=True,  # HTTPS only (ANSSI required)
                 samesite='Strict',  # CSRF protection (ANSSI required)
-                max_age=10 * 60,  # 10 minutes
+                max_age=age * 60,  # 10 minutes
                 path='/'  # Explicit path
             )
         logger.info(f"{user.id} logged in")

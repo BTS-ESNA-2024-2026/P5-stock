@@ -8,13 +8,8 @@ from src.core.middleware import register_middleware
 from dotenv import load_dotenv
 
 from src.core.routes.root import root_blueprint
-from src.core.routes.assets.asset_type import asset_type_blueprint
-from src.core.routes.assets.specs import specs_blueprint
-from src.core.routes.assets.value import values_blueprint
 from src.core.routes.auth.auth import auth_blueprint
-from src.core.routes.assets.asset import assets_blueprint
-from src.core.routes.assets.base import base_blueprint
-from src.core.routes.CRUD.room import room_blueprint
+from src.core.routes.CRUD.CRUD import CRUD
 
 
 
@@ -31,10 +26,5 @@ def create_app():
 
     app.register_blueprint(root_blueprint)
     app.register_blueprint(auth_blueprint)
-    app.register_blueprint(asset_type_blueprint)
-    app.register_blueprint(base_blueprint)
-    app.register_blueprint(assets_blueprint)
-    app.register_blueprint(specs_blueprint)
-    app.register_blueprint(values_blueprint)
-    app.register_blueprint(room_blueprint)
+    app.register_blueprint(CRUD)
     return app
