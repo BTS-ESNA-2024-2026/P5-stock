@@ -6,10 +6,26 @@ from loguru import logger
 
 from database.model import db, User, ph
 from src.core.config import limiter
-from src.core.decorators.decorators import require_admin
-from src.core.tools import get_user_by_username, validate_username, verify_password
+from src.core.decorators.decorators import require_admin, require_jwt
+from src.core.tools import get_user_by_username, validate_username, verify_password, jwt_decode
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
+
+
+@auth_blueprint.get("/me")
+def get_me():
+    user = jwt_decode(request)
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    
+    return jsonify({
+        'id': user.id,
+        'username': user.username,
+        'name': user.name,
+        'role': user.role.name if user.role else None,
+        'active': user.active
+    }), 200
+
 
 @auth_blueprint.get("/login")
 def get_login():
@@ -19,8 +35,8 @@ def get_login():
 @limiter.limit("5 per minute")
 def post_login():
     try:
-        username = request.form.get('username')
-        password = request.form.get('password')
+        username = request.json.get('username')
+        password = request.json.get('password')
         user = get_user_by_username(username)
         if not user or not verify_password(password, user.hash):
             return jsonify({
