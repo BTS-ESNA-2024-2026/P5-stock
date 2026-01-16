@@ -70,6 +70,13 @@ htmlcov/
 # Documentation
 docs/_build/
 
+# Node.js
+node_modules/
+npm-debug.log
+pnpm-debug.log
+yarn-error.log
+.pnpm-store/
+
 # Backup files
 *.bak
 *.backup
