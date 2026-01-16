@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    container_name: p5-stock-app
+    stdin_open: true
+    tty: true
+    working_dir: /workspaces/P5-stock
+    environment:
+      DATABASE_URL: mysql+pymysql://root:rootpassword@mysql:3306/P5DB
+    command: /bin/sh -c "while sleep 1000; do :; done"
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_admin
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: P5DB
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../database/mysql-docker/init.sql:/docker-entrypoint-initdb.d/init.sql
