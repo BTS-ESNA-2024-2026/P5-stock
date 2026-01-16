@@ -6,6 +6,7 @@ from src.core.config import limiter
 from src.core.logs import setup_logger
 from src.core.middleware import register_middleware
 from dotenv import load_dotenv
+import os
 
 from src.core.routes.root import root_blueprint
 from src.core.routes.assets.asset_type import asset_type_blueprint
@@ -22,7 +23,11 @@ env_path = Path(__file__).parent.parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
 def create_app():
-    app = Flask(__name__)
+    # Configure static folder to serve the built React app
+    backend_dir = Path(__file__).parent.parent
+    dist_folder = str(backend_dir.parent / 'frontend' / 'dist')
+    app = Flask(__name__, static_folder=dist_folder, static_url_path='')
+    
     app.config.from_object(Config)
     db.init_app(app)
     setup_logger(app)
