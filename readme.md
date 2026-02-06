@@ -53,6 +53,6 @@ flask --app src run --debug # includes hot reload, /!\ do not use in production
 ## log in the application (get token)
 login using /auth/login
 ```
-defadmin
+defadm
 yaa
 ```
