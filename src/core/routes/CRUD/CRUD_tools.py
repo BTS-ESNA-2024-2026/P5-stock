@@ -47,6 +47,7 @@ def update(ID, element, updatable_fields, data, obj=None) :
                     return ifield_err(element, mode, data)
         if not updated:
             return mfield_err(element, mode, data)
+        print("starting to update")
         obj.DE = datetime.utcnow() # even if element doesn not have DE, DB will just ignore it so leave active
         return commit(element, obj, mode)
     except Exception as e:
@@ -61,6 +62,13 @@ def delete(ID, element, obj=None) :
     except Exception as e:
         return ukn_err(element, mode, e)
 
+def err(code, message, *args, **kwargs): # generic error
+    logger.error(f"Generic : {message} : {str(args)} | {str(kwargs)}")
+    return jsonify({
+        'message': message,
+        'status': 'error'
+    }), code
+
 def ukn_err(elem, mode="create", *args): # unknown error
     logger.error(f"Failed to {mode} {elem}, unknown error : {str(*args)}")
     return jsonify({
@@ -69,7 +77,7 @@ def ukn_err(elem, mode="create", *args): # unknown error
     }), 500
 
 def fkc_err(elem, mode="create", *args): # foreign key constraint failed
-    logger.error(f"Failed to {mode} {elem}, foreing key constraint failed : {str(*args)}")
+    logger.error(f"Failed to {mode} {elem}, foreing key constraint failed / invalid query : {str(*args)}")
     return jsonify({
         'message': 'Invalid foreign key / link to other object',
         'status': 'error'
@@ -99,7 +107,7 @@ def nf_err(elem, mode="create", *args): #not found, mode for consistency sake
 
 def success(elem, mode="create", *args): 
     past = {"read" : "red", "create" : "created", "update" : "updated", "delete" : "deleted"}
-    logger.info(f"New {elem} {mode} : {str(*args)}")
+    logger.info(f"New {elem} {past[mode]} : {str(*args)}")
     return jsonify({
         'message': f'{elem} {past[mode]} succesfully',
         'status': 'success'
@@ -110,11 +118,9 @@ def commit(elem, obj, mode="create") :
         db.session.add(obj)
     elif mode=="delete" :
         db.session.delete(obj)
-    else :
-        return ukn_err(elem, mode, obj)
     try :
         db.session.commit()
-    except IntegrityError as e :
+    except IntegrityError as e:
         return fkc_err(elem, mode, e)
     except Exception as e :
         return ukn_err(elem, mode, e)
