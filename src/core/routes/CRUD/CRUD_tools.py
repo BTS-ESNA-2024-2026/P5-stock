@@ -47,7 +47,6 @@ def update(ID, element, updatable_fields, data, obj=None) :
                     return ifield_err(element, mode, data)
         if not updated:
             return mfield_err(element, mode, data)
-        print("starting to update")
         obj.DE = datetime.utcnow() # even if element doesn not have DE, DB will just ignore it so leave active
         return commit(element, obj, mode)
     except Exception as e:
@@ -121,7 +120,9 @@ def commit(elem, obj, mode="create") :
     try :
         db.session.commit()
     except IntegrityError as e:
+        db.session.rollback()
         return fkc_err(elem, mode, e)
     except Exception as e :
+        db.session.rollback()
         return ukn_err(elem, mode, e)
     return success(elem, mode)
