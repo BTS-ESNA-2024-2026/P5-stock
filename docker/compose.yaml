@@ -1,0 +1,40 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_admin
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: P5DB
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../database/mysql-docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: flask_backend
+    restart: always
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=mysql+pymysql://root:rootpassword@mysql:3306/P5DB
+      - MYSQL_HOST=mysql
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=rootpassword
+      - MYSQL_DATABASE=P5DB
+    depends_on:
+      - mysql
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: frontend_app
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
