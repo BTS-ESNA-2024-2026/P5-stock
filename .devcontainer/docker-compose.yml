@@ -10,17 +10,23 @@ services:
     tty: true
     working_dir: /workspaces/P5-stock
     environment:
-      DATABASE_URL: mysql+pymysql://root:rootpassword@mysql:3306/P5DB
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     command: /bin/sh -c "while sleep 1000; do :; done"
+    depends_on:
+      - postgres
 
-  mysql:
-    image: mysql:8.0
-    container_name: mysql_admin
+  postgres:
+    image: postgres:17
+    container_name: postgres_admin
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: P5DB
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: postgres
     ports:
-      - "3306:3306"
+      - "5432:5432"
     volumes:
-      - ../database/mysql-docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

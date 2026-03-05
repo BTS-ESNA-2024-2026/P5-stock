@@ -1,13 +1,14 @@
-import uuid
 from datetime import datetime
+from uuid import UUID
 
 from argon2 import PasswordHasher
 from sqlalchemy import (
-    Boolean, DateTime, Enum, ForeignKey, Integer, SmallInteger, Text, String, BigInteger
+    Boolean, DateTime, Enum, ForeignKey, Text, String, Uuid, JSON
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional, List
 from flask_sqlalchemy import SQLAlchemy
+from uuid_extensions import uuid7
 
 
 db = SQLAlchemy()
@@ -21,12 +22,12 @@ class Role(Base):
     __tablename__ = "role"
     __table_args__ = {"comment": "admin, user, viewer, technician"}
 
-    id: Mapped[int] = mapped_column(
-        SmallInteger, primary_key=True, autoincrement=True
+    id: Mapped[UUID] = mapped_column(
+        Uuid, primary_key=True, default=uuid7
     )
     name: Mapped[str] = mapped_column(Text, nullable=False, comment="admin, user")
     desc: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    perms: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    perms: Mapped[dict] = mapped_column(JSON, nullable=False)
 
     # Relationships
     users: Mapped[List["User"]] = relationship(back_populates="role")
@@ -35,9 +36,9 @@ class Role(Base):
 class User(Base):
     __tablename__ = "user"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    group_id: Mapped[int] = mapped_column(
-        SmallInteger, ForeignKey("role.id"), nullable=False
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
+    group_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("role.id"), nullable=False
     )
     DA: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     DE: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -60,10 +61,10 @@ class User(Base):
         back_populates="user", foreign_keys="LogAdmin.user_id"
     )
 
-    def __init__(self, username: str, group_id: int,
+    def __init__(self, username: str, group_id, 
         hash: str, hash_algorithm: str, name: Optional[str] = None,
         MFA: Optional[str] = None, active: bool = True):
-        self.id = uuid.uuid4().int & ((1 << 63) - 1)
+        self.id = uuid7()
         self.username = username
         self.group_id = group_id
         self.DA = datetime.utcnow()
@@ -78,7 +79,7 @@ class User(Base):
 class Base_(Base):
     __tablename__ = "base"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     address: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -89,9 +90,9 @@ class Base_(Base):
 class Room(Base):
     __tablename__ = "room"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    base_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("base.id"), nullable=False
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
+    base_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("base.id"), nullable=False
     )
     room: Mapped[str] = mapped_column(Text, nullable=False, comment="Paris")
 
@@ -103,10 +104,10 @@ class Room(Base):
 class AssetType(Base):
     __tablename__ = "asset_type"
 
-    id: Mapped[int] = mapped_column(
-        SmallInteger,
+    id: Mapped[UUID] = mapped_column(
+        Uuid,
         primary_key=True,
-        autoincrement=True,
+        default=uuid7,
         comment="vehicle, MRE, weapon...",
     )
     type: Mapped[str] = mapped_column(
@@ -121,7 +122,7 @@ class AssetType(Base):
 class Mission(Base):
     __tablename__ = "mission"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
     DA: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     DE: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     date_start: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
@@ -142,23 +143,23 @@ class Asset(Base):
     __tablename__ = "asset"
     __table_args__ = {"comment": "in mission, on repair, available..."}
 
-    id: Mapped[int] = mapped_column(
-        Integer,
+    id: Mapped[UUID] = mapped_column(
+        Uuid,
         primary_key=True,
-        autoincrement=True,
+        default=uuid7,
         comment="vehicle no 45, 12th HK 416...",
     )
-    type_asset_id: Mapped[int] = mapped_column(
-        SmallInteger, ForeignKey("asset_type.id"), nullable=False
+    type_asset_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("asset_type.id"), nullable=False
     )
-    mission_id: Mapped[Optional[int]] = mapped_column(
-        Integer,
+    mission_id: Mapped[Optional[UUID]] = mapped_column(
+        Uuid,
         ForeignKey("mission.id"),
         nullable=True,
         comment="no assigned mission if value not assigned",
     )
-    room_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("room.id"), nullable=True
+    room_id: Mapped[Optional[UUID]] = mapped_column(
+        Uuid, ForeignKey("room.id"), nullable=True
     )
     DA: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     DE: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -173,7 +174,6 @@ class Asset(Base):
         nullable=False
     )
     quantity: Mapped[Optional[int]] = mapped_column(
-        Integer,
         nullable=True,
         comment="for packs, do not set if quantity = 1 like for a vehicle",
     )
@@ -193,14 +193,14 @@ class Asset(Base):
 class Spec(Base):
     __tablename__ = "spec"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
+    id: Mapped[UUID] = mapped_column(
+        Uuid,
         primary_key=True,
-        autoincrement=True,
+        default=uuid7,
         comment="specs #7 = how much km a car has",
     )
-    type_id: Mapped[int] = mapped_column(
-        SmallInteger, ForeignKey("asset_type.id"), nullable=False
+    type_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("asset_type.id"), nullable=False
     )
     name: Mapped[str] = mapped_column(
         Text, nullable=False, comment="km, expiration date, bullet..."
@@ -215,17 +215,17 @@ class Spec(Base):
 class Value(Base):
     __tablename__ = "value"
 
-    id: Mapped[int] = mapped_column(
-        Integer,
+    id: Mapped[UUID] = mapped_column(
+        Uuid,
         primary_key=True,
-        autoincrement=True,
+        default=uuid7,
         comment="link between spec and asset by adding value : 3rd car's kilometers : 400000km",
     )
-    asset_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("asset.id"), nullable=False
+    asset_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("asset.id"), nullable=False
     )
-    spec_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("spec.id"), nullable=False
+    spec_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("spec.id"), nullable=False
     )
     DA: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     DE: Mapped[datetime] = mapped_column(DateTime, nullable=False)
@@ -245,9 +245,9 @@ class LogAdmin(Base):
         "comment": "separated admin logs for added security, when user (user_id) are edited/added... or when app settings are changed"
     }
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(
-        BigInteger, ForeignKey("user.id"), nullable=False
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
+    user_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("user.id"), nullable=False
     )
     D: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     action: Mapped[str] = mapped_column(
@@ -266,15 +266,15 @@ class LogAdmin(Base):
 class Log(Base):
     __tablename__ = "log"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    asset_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("asset.id"), nullable=True
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
+    asset_id: Mapped[Optional[UUID]] = mapped_column(
+        Uuid, ForeignKey("asset.id"), nullable=True
     )
-    spec_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("spec.id"), nullable=True
+    spec_id: Mapped[Optional[UUID]] = mapped_column(
+        Uuid, ForeignKey("spec.id"), nullable=True
     )
-    value_id: Mapped[Optional[int]] = mapped_column(
-        Integer, ForeignKey("value.id"), nullable=True
+    value_id: Mapped[Optional[UUID]] = mapped_column(
+        Uuid, ForeignKey("value.id"), nullable=True
     )
     D: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     action: Mapped[str] = mapped_column(
@@ -295,9 +295,9 @@ class Log(Base):
 class LogMission(Base):
     __tablename__ = "log_mission"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    mission_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("mission.id"), nullable=False
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
+    mission_id: Mapped[UUID] = mapped_column(
+        Uuid, ForeignKey("mission.id"), nullable=False
     )
     D: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     action: Mapped[str] = mapped_column(

@@ -1,12 +1,14 @@
+from uuid import UUID
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from database.model import Base, Asset, Log
 from datetime import datetime
 
 
-class MySqlConnector:
+class DbConnector:
     def __init__(self, server, databaseName, databaseUser, databasePassword):
-        self.DATABASE_URL = f"mysql+pymysql://{databaseUser}:{databasePassword}@{server}/{databaseName}"
+        self.DATABASE_URL = f"postgresql+psycopg://{databaseUser}:{databasePassword}@{server}/{databaseName}"
         self.engine = create_engine(self.DATABASE_URL)
         self.session = sessionmaker(bind=self.engine)()
 
@@ -18,7 +20,7 @@ class MySqlConnector:
 
     # ============= ASSET METHODS =============
 
-    def material_as_lost(self, asset_id: int, description: str = None) -> bool:
+    def material_as_lost(self, asset_id: UUID, description: str = None) -> bool:
         """Marque un asset comme perdu."""
         asset = self.session.get(Asset, asset_id)
         if not asset or asset.status == "LOST":

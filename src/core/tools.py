@@ -1,4 +1,6 @@
 import re
+from uuid import UUID
+
 import jwt
 from argon2.exceptions import VerifyMismatchError
 from database.model import db, User, ph, AssetType
@@ -54,5 +56,5 @@ def jwt_decode(request):
         print(token)
         print(e)
         return False
-    return get_user_by_id(request.user_data['user_id'])
+    return get_user_by_id(UUID(request.user_data['user_id']))
 

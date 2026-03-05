@@ -64,20 +64,20 @@ class CRUDHandler:
 def insert_room():
     pass
 
-@CRUD.get("/room/<int:ID>")
+@CRUD.get("/room/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Room, "room", "get")
 def get_room(ID):
     pass
 
-@CRUD.put("/room/<int:ID>")
+@CRUD.put("/room/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Room, "room", "update", 
     updatable_fields=['base_id', 'room'])
 def update_room(ID):
     pass
 
-@CRUD.delete("/room/<int:ID>")
+@CRUD.delete("/room/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Room, "room", "delete")
 def delete_room(ID):
@@ -93,20 +93,20 @@ def delete_room(ID):
 def insert_base():
     pass
 
-@CRUD.get("/base/<int:ID>")
+@CRUD.get("/base/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Base_, "base", "get")
 def get_base(ID):
     pass
 
-@CRUD.put("/base/<int:ID>")
+@CRUD.put("/base/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Base_, "base", "update", 
     updatable_fields=['name', 'address'])
 def update_base(ID):
     pass
 
-@CRUD.delete("/base/<int:ID>")
+@CRUD.delete("/base/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Base_, "base", "delete")
 def delete_base(ID):
@@ -124,20 +124,20 @@ def delete_base(ID):
 def insert_asset():
     pass
 
-@CRUD.get("/asset/<int:ID>")
+@CRUD.get("/asset/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Asset, "asset", "get")
 def get_asset(ID):
     pass
 
-@CRUD.put("/asset/<int:ID>")
+@CRUD.put("/asset/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Asset, "asset", "update", 
     updatable_fields=["mission_id", "room_id", "name", "number", "status", "quantity", "shelf", "sensible"])
 def update_asset(ID):
     pass
 
-@CRUD.delete("/asset/<int:ID>")
+@CRUD.delete("/asset/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Asset, "asset", "delete")
 def delete_asset(ID):
@@ -153,20 +153,20 @@ def delete_asset(ID):
 def insert_asset_type():
     pass
 
-@CRUD.get("/asset_type/<int:ID>")
+@CRUD.get("/asset_type/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(AssetType, "asset_type", "get")
 def get_asset_type(ID):
     pass
 
-@CRUD.put("/asset_type/<int:ID>")
+@CRUD.put("/asset_type/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(AssetType, "asset_type", "update", 
     updatable_fields=["type"])
 def update_asset_type(ID):
     pass
 
-@CRUD.delete("/asset_type/<int:ID>")
+@CRUD.delete("/asset_type/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(AssetType, "asset_type", "delete")
 def delete_asset_type(ID):
@@ -182,20 +182,20 @@ def delete_asset_type(ID):
 def insert_spec():
     pass
 
-@CRUD.get("/spec/<int:ID>")
+@CRUD.get("/spec/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Spec, "spec", "get")
 def get_spec(ID):
     pass
 
-@CRUD.put("/spec/<int:ID>")
+@CRUD.put("/spec/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Spec, "spec", "update", 
     updatable_fields=["type_id", "name"])
 def update_spec(ID):
     pass
 
-@CRUD.delete("/spec/<int:ID>")
+@CRUD.delete("/spec/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Spec, "spec", "delete")
 def delete_spec(ID):
@@ -210,20 +210,20 @@ def delete_spec(ID):
 def insert_value():
     pass
 
-@CRUD.get("/value/<int:ID>")
+@CRUD.get("/value/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Value, "value", "get")
 def get_value(ID):
     pass
 
-@CRUD.put("/value/<int:ID>")
+@CRUD.put("/value/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Value, "value", "update", 
     updatable_fields=["asset_id", "spec_id", "value"])
 def update_value(ID):
     pass
 
-@CRUD.delete("/value/<int:ID>")
+@CRUD.delete("/value/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Value, "value", "delete")
 def delete_value(ID):
@@ -241,20 +241,20 @@ def delete_value(ID):
 def insert_mission():
     pass
 
-@CRUD.get("/mission/<int:ID>")
+@CRUD.get("/mission/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Mission, "mission", "get")
 def get_mission(ID):
     pass
 
-@CRUD.put("/mission/<int:ID>")
+@CRUD.put("/mission/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Mission, "mission", "update", 
     updatable_fields=["title", "status", "theatre", "date_start", "date_end", "description"])
 def update_mission(ID):
     pass
 
-@CRUD.delete("/mission/<int:ID>")
+@CRUD.delete("/mission/<uuid:ID>")
 @require_technician
 @CRUDHandler.crud_operation(Mission, "mission", "delete")
 def delete_mission(ID):

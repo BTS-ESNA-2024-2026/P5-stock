@@ -1,8 +1,19 @@
+from uuid import UUID
+
 from database.model import db
 from loguru import logger
 from flask import jsonify
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+
+
+def _serialize_value(val):
+    """Convert non-JSON-serializable types for API responses."""
+    if isinstance(val, UUID):
+        return str(val)
+    if isinstance(val, datetime):
+        return val.isoformat()
+    return val
 
 #mode : ["read", "create", "update", "delete"]
 
@@ -28,7 +39,7 @@ def read(ID, element, obj=None) :
     if not obj :
         return nf_err(element, mode, ID)
     try:
-        return {column.name: getattr(obj, column.name) for column in obj.__table__.columns if getattr(obj, column.name) is not None}
+        return {column.name: _serialize_value(getattr(obj, column.name)) for column in obj.__table__.columns if getattr(obj, column.name) is not None}
     except Exception as e:
         return ukn_err(element, mode, e)
 
