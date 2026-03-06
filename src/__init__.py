@@ -1,16 +1,16 @@
 from pathlib import Path
 from flask import Flask
-from database.config import Config
-from database.model import db
-from database.init_db import init_db
-from src.core.config import limiter
-from src.core.logs import setup_logger
-from src.core.middleware import register_middleware
+from src.database.config import Config
+from src.database.model import db
+from src.database.init_db import init_db
+from src.services.config import limiter
+from src.services.logs import setup_logger
+from src.middleware import register_middleware
 from dotenv import load_dotenv
 
-from src.core.routes.root import root_blueprint
-from src.core.routes.auth.auth import auth_blueprint
-from src.core.routes.CRUD.CRUD import CRUD
+from src.routes.root import root_blueprint
+from src.routes.auth import auth_blueprint
+from src.routes.API.CRUD import CRUD
 
 
 

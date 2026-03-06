@@ -1,10 +1,10 @@
 from uuid import UUID
-
-from database.model import db
 from loguru import logger
 from flask import jsonify
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+
+from src.database.model import db
 
 
 def _serialize_value(val):

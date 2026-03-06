@@ -1,5 +1,5 @@
 from sqlalchemy import text
-from database.model import db
+from src.database.model import db
 
 
 # ============================================================================

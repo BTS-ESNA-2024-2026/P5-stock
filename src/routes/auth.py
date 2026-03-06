@@ -5,10 +5,10 @@ import jwt
 from flask import Blueprint, render_template, request, make_response, jsonify
 from loguru import logger
 
-from database.model import db, User, ph
-from src.core.config import limiter
-from src.core.decorators.decorators import require_admin
-from src.core.tools import get_user_by_username, validate_username, verify_password
+from src.database.model import db, User, ph
+from src.services.config import limiter
+from src.services.decorators import require_admin
+from src.services.tools import get_user_by_username, validate_username, verify_password
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 

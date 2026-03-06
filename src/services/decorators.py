@@ -4,7 +4,7 @@ from flask import request, jsonify, current_app
 import jwt
 import random as r
 
-from src.core.tools import jwt_decode
+from src.services.tools import jwt_decode
 
 
 def require_jwt(f):
