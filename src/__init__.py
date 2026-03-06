@@ -1,13 +1,16 @@
 from pathlib import Path
 from flask import Flask
+
+from dotenv import load_dotenv
+
 from src.database.config import Config
 from src.database.model import db, migrate
-from src.database.init_db import init_db
-import src.database.events  # noqa: F401  — registers SQLAlchemy event listeners
+from src.database.init_db import SEED_SQL
+import src.database.events
 from src.services.config import limiter
 from src.services.logs import setup_logger
 from src.middleware import register_middleware
-from dotenv import load_dotenv
+from sqlalchemy import text
 
 
 from src.routes.root import root_blueprint
@@ -22,12 +25,18 @@ load_dotenv(dotenv_path=env_path)
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    migrate.init_app(app, db)
+
     db.init_app(app)
-    init_db(app)
+    migrate.init_app(app, db)
+
+    with app.app_context():
+        db.create_all()
+        db.session.execute(text(SEED_SQL))
+        db.session.commit()
     setup_logger(app)
     limiter.init_app(app)
     register_middleware(app)
+
     
 
     app.register_blueprint(root_blueprint)

@@ -1,7 +1,3 @@
-from sqlalchemy import text
-from src.database.model import db
-
-
 # ============================================================================
 # SEED DATA
 # ============================================================================
@@ -84,15 +80,3 @@ VALUES (
 ) ON CONFLICT (id) DO NOTHING;
 
 """
-
-
-def init_db(app):
-    """Create all tables and seed data.
-
-    Triggers are handled by SQLAlchemy ORM event listeners (registered at
-    import time above). Fully idempotent — safe to call on every app startup.
-    """
-    with app.app_context():
-        db.create_all()
-        db.session.execute(text(SEED_SQL))
-        db.session.commit()
