@@ -1,6 +1,6 @@
 from flask import request, jsonify
 from loguru import logger
-from src.core.tools import jwt_decode
+from src.services.tools import jwt_decode
 
 
 def register_middleware(app):
