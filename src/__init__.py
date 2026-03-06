@@ -3,6 +3,7 @@ from flask import Flask
 from src.database.config import Config
 from src.database.model import db, migrate
 from src.database.init_db import init_db
+import src.database.events  # noqa: F401  — registers SQLAlchemy event listeners
 from src.services.config import limiter
 from src.services.logs import setup_logger
 from src.middleware import register_middleware
