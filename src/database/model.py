@@ -9,9 +9,11 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from typing import Optional, List
 from flask_sqlalchemy import SQLAlchemy
 from uuid_extensions import uuid7
+from flask_migrate import Migrate
 
 
 db = SQLAlchemy()
+migrate = Migrate()
 ph = PasswordHasher()
 
 class Base(DeclarativeBase):
