@@ -36,7 +36,7 @@ openssl pkey -in private.pem -pubout -out public.pem
 ## Initialize database in docker
 The docker-compose will create the docker image and run init.sql to create and expose the database. Use `sudo` if required
 ```sh
-cd src/database/postres-docker
+cd src/database/postgres-docker
 docker compose --env-file ../../../.env up
 docker ps # confirm creation of container
 cd ../../..

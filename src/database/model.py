@@ -16,6 +16,7 @@ class Base(DeclarativeBase):
     pass
 
 db = SQLAlchemy()
+Base = db.Model
 migrate = Migrate()
 ph = PasswordHasher()
 

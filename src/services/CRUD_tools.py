@@ -2,7 +2,8 @@ from uuid import UUID
 from loguru import logger
 from flask import jsonify
 from datetime import datetime
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import ProgrammingError
+#from traceback import print_exc as trcb
 
 from src.database.model import db
 
@@ -81,6 +82,7 @@ def err(code, message, *args, **kwargs): # generic error
 
 def ukn_err(elem, mode="create", *args): # unknown error
     logger.error(f"Failed to {mode} {elem}, unknown error : {str(*args)}")
+    # print(trcb())
     return jsonify({
         'message': 'Internal server error',
         'status': 'error'
@@ -130,7 +132,7 @@ def commit(elem, obj, mode="create") :
         db.session.delete(obj)
     try :
         db.session.commit()
-    except IntegrityError as e:
+    except ProgrammingError as e:
         db.session.rollback()
         return fkc_err(elem, mode, e)
     except Exception as e :
