@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
+import os
 from uuid import UUID
 
 import jwt
-from flask import Blueprint, render_template, request, make_response, jsonify
+from flask import Blueprint, redirect, request, make_response, jsonify
 from loguru import logger
 
 from src.database.model import db, User, ph
@@ -16,7 +17,8 @@ VIEWER_ROLE_ID = UUID('019563a0-0000-7000-8000-000000000005')
 
 @auth_blueprint.get("/login")
 def get_login():
-    return render_template("login.html")
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")
+    return redirect(f"{frontend_url}/login", code=302)
 
 @auth_blueprint.post("/login")
 @limiter.limit("5 per minute")
