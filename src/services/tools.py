@@ -1,7 +1,10 @@
 import re
+from uuid import UUID
 import jwt
+from loguru import logger
 from argon2.exceptions import VerifyMismatchError
-from database.model import db, User, ph, AssetType
+
+from src.database.model import db, User, ph, AssetType
 
 
 def get_user_by_username(username):
@@ -42,17 +45,16 @@ def jwt_decode(request):
         request.user_data = payload
 
     except jwt.ExpiredSignatureError:
-        print("Token expired")
+        logger.error(f"Token expired : {token}")
         return False
     except jwt.InvalidSignatureError:
-        print("Signature valide Error")
+        logger.error(f"Signature valide Error : {token}")
         return False
     except jwt.DecodeError:
-        print("Token decode Error")
+        logger.error(f"Token decode Error : {token}")
         return False
     except Exception as e:
-        print(token)
-        print(e)
+        logger.error(f"Unknown error in token ({e}) : {token}")
         return False
-    return get_user_by_id(request.user_data['user_id'])
+    return get_user_by_id(UUID(request.user_data['user_id']))
 

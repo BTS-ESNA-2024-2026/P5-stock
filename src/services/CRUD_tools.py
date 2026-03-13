@@ -1,8 +1,20 @@
-from database.model import db
+from uuid import UUID
 from loguru import logger
 from flask import jsonify
 from datetime import datetime
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import ProgrammingError
+#from traceback import print_exc as trcb
+
+from src.database.model import db
+
+
+def _serialize_value(val):
+    """Convert non-JSON-serializable types for API responses."""
+    if isinstance(val, UUID):
+        return str(val)
+    if isinstance(val, datetime):
+        return val.isoformat()
+    return val
 
 #mode : ["read", "create", "update", "delete"]
 
@@ -28,7 +40,7 @@ def read(ID, element, obj=None) :
     if not obj :
         return nf_err(element, mode, ID)
     try:
-        return {column.name: getattr(obj, column.name) for column in obj.__table__.columns if getattr(obj, column.name) is not None}
+        return {column.name: _serialize_value(getattr(obj, column.name)) for column in obj.__table__.columns if getattr(obj, column.name) is not None}
     except Exception as e:
         return ukn_err(element, mode, e)
 
@@ -70,6 +82,7 @@ def err(code, message, *args, **kwargs): # generic error
 
 def ukn_err(elem, mode="create", *args): # unknown error
     logger.error(f"Failed to {mode} {elem}, unknown error : {str(*args)}")
+    # print(trcb())
     return jsonify({
         'message': 'Internal server error',
         'status': 'error'
@@ -119,7 +132,7 @@ def commit(elem, obj, mode="create") :
         db.session.delete(obj)
     try :
         db.session.commit()
-    except IntegrityError as e:
+    except ProgrammingError as e:
         db.session.rollback()
         return fkc_err(elem, mode, e)
     except Exception as e :

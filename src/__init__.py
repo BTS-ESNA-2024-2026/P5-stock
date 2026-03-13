@@ -1,15 +1,21 @@
 from pathlib import Path
 from flask import Flask
-from database.config import Config
-from database.model import db
-from src.core.config import limiter
-from src.core.logs import setup_logger
-from src.core.middleware import register_middleware
+
 from dotenv import load_dotenv
 
-from src.core.routes.root import root_blueprint
-from src.core.routes.auth.auth import auth_blueprint
-from src.core.routes.CRUD.CRUD import CRUD
+from src.database.config import Config
+from src.database.model import db, migrate
+from src.database.init_db import SEED_SQL
+import src.database.events
+from src.services.config import limiter
+from src.services.logs import setup_logger
+from src.middleware import register_middleware
+from sqlalchemy import text
+
+
+from src.routes.root import root_blueprint
+from src.routes.auth import auth_blueprint
+from src.routes.API.CRUD import CRUD
 
 
 
@@ -19,10 +25,19 @@ load_dotenv(dotenv_path=env_path)
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
     db.init_app(app)
+    migrate.init_app(app, db)
+
+    with app.app_context():
+        db.create_all()
+        db.session.execute(text(SEED_SQL))
+        db.session.commit()
     setup_logger(app)
     limiter.init_app(app)
     register_middleware(app)
+
+    
 
     app.register_blueprint(root_blueprint)
     app.register_blueprint(auth_blueprint)

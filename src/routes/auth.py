@@ -1,15 +1,18 @@
 from datetime import datetime, timedelta
+from uuid import UUID
 
 import jwt
 from flask import Blueprint, render_template, request, make_response, jsonify
 from loguru import logger
 
-from database.model import db, User, ph
-from src.core.config import limiter
-from src.core.decorators.decorators import require_admin
-from src.core.tools import get_user_by_username, validate_username, verify_password
+from src.database.model import db, User, ph
+from src.services.config import limiter
+from src.services.decorators import require_admin
+from src.services.tools import get_user_by_username, validate_username, verify_password
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
+
+VIEWER_ROLE_ID = UUID('019563a0-0000-7000-8000-000000000005')
 
 @auth_blueprint.get("/login")
 def get_login():
@@ -29,7 +32,7 @@ def post_login():
             }), 401
 
         access_payload = {
-                'user_id': user.id,
+                'user_id': str(user.id),
                 'exp': datetime.utcnow() + timedelta(minutes=age),
                 'iat': datetime.utcnow(),
                 'type': 'access'
@@ -77,7 +80,7 @@ def post_register():
         }),401)
     try:
         user = User(
-            group_id=5,
+            group_id=VIEWER_ROLE_ID,
             username=username,
             name = name if name else None,
             hash=ph.hash(password),

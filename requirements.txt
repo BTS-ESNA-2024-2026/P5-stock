@@ -13,11 +13,12 @@ greenlet==3.3.0
 itsdangerous==2.2.0
 Jinja2==3.1.6
 MarkupSafe==3.0.3
-mysql-connector-python==9.5.0
+psycopg[binary]
 pycparser==2.23
 PyJWT==2.10.1
-PyMySQL==1.1.2
 python-dotenv==1.2.1
 SQLAlchemy==2.0.45
 typing_extensions==4.15.0
+uuid7
 Werkzeug==3.1.4
+ 

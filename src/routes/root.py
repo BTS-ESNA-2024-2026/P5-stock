@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, send_from_directory
-from src.core.decorators.decorators import require_technician, require_viewer, require_user
+from src.services.decorators import require_technician, require_viewer, require_user
 from loguru import logger
 
 root_blueprint = Blueprint("root", __name__)
