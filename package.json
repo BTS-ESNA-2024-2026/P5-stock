@@ -1,0 +1,25 @@
+{
+  "name": "p5-stock",
+  "description": "P5 Stock Management System - Full-stack monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "dev:frontend": "pnpm --filter frontend dev",
+    "dev:backend": "pnpm --filter backend dev",
+    "build": "pnpm --parallel -r run build",
+    "build:frontend": "pnpm --filter frontend build",
+    "build:backend": "pnpm --filter backend run build",
+    "lint": "pnpm --parallel -r run lint",
+    "lint:frontend": "pnpm --filter frontend lint",
+    "preview": "pnpm --filter frontend preview",
+    "start:backend": "pnpm --filter backend start",
+    "install:all": "pnpm install && pnpm --filter backend install",
+    "clean": "pnpm --parallel -r --include-dependencies exec rm -rf dist node_modules .next"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=10.0.0"
+  }
+}

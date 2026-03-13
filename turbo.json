@@ -1,0 +1,28 @@
+{
+  "version": "1",
+  "extends": ["//"],
+  "globalDependencies": ["**/.env", "**/.env.local"],
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "interactive": true
+    },
+    "build": {
+      "outputs": ["dist/**", "build/**"],
+      "cache": true,
+      "dependsOn": ["^build"]
+    },
+    "lint": {
+      "outputs": [],
+      "cache": true
+    },
+    "preview": {
+      "cache": false,
+      "interactive": true
+    },
+    "start": {
+      "cache": false,
+      "interactive": true
+    }
+  }
+}

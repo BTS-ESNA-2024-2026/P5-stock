@@ -43,3 +43,6 @@ def create_app():
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(CRUD)
     return app
+
+# Create app instance for Gunicorn
+app = create_app()

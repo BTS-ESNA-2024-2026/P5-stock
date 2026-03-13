@@ -1,2 +1,2 @@
 FROM alpine:latest
-RUN apk add --update git python3 py3-pip nodejs npm pnpm git
+RUN apk add --update git nodejs npm pnpm git uv
