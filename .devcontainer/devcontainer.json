@@ -29,5 +29,7 @@
 			}
 		}
 	},
+	"postCreateCommand": "pnpm genkey",
+	"postStartCommand": "pnpm i",
 	"remoteUser": "vscode"
 }

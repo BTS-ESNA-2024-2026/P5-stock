@@ -16,7 +16,8 @@
     "preview": "pnpm --filter frontend preview",
     "start:backend": "pnpm --filter backend start",
     "install:all": "pnpm install && pnpm --filter backend install",
-    "clean": "pnpm --parallel -r --include-dependencies exec rm -rf dist node_modules .next"
+    "clean": "pnpm --parallel -r --include-dependencies exec rm -rf dist node_modules .next",
+    "genkey": "pnpm --filter backend genkey"
   },
   "engines": {
     "node": ">=18.0.0",

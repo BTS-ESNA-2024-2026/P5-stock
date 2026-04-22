@@ -9,7 +9,7 @@ from loguru import logger
 from src.database.model import db, User, ph
 from src.services.config import limiter
 from src.services.decorators import require_admin
-from src.services.tools import get_user_by_username, validate_username, verify_password
+from src.services.tools import get_user_by_username, jwt_decode, validate_username, verify_password
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -100,3 +100,24 @@ def post_register():
         return jsonify({
             'message': 'Internal Server Error',
         }), 500
+
+
+@auth_blueprint.get("/me")
+def get_me():
+    user = jwt_decode(request)
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    return jsonify({
+        'id': str(user.id),
+        'username': user.username,
+        'name': user.name,
+        'role': user.role.name if user.role else None,
+        'active': user.active,
+    }), 200
+
+
+@auth_blueprint.post("/logout")
+def post_logout():
+    response = make_response(jsonify({'message': 'Logged out'}), 200)
+    response.delete_cookie('access_token', path='/')
+    return response

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 type AppLayoutProps = {
   children: ReactNode
@@ -16,6 +17,14 @@ const links = [
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const navigate = useNavigate()
+  const { user, logout } = useAuth()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
+
+  const initial = user?.name?.charAt(0).toUpperCase() ?? user?.username?.charAt(0).toUpperCase() ?? '?'
 
   return (
     <div className="shell">
@@ -39,13 +48,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
         <div className="top-actions">
           <div className="chip">
-            <span id="userAvatar" className="icon-btn user-avatar">A</span>
+            <span className="icon-btn user-avatar">{initial}</span>
             <div className="user-meta">
-              <span id="userName" className="user-name">Admin</span>
-              <small id="userRole" className="user-role">ADMIN</small>
+              <span className="user-name">{user?.name ?? user?.username ?? '—'}</span>
+              <small className="user-role">{user?.role?.toUpperCase() ?? ''}</small>
             </div>
           </div>
-          <button className="btn btn-secondary btn-sm" onClick={() => navigate('/login')}>
+          <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
             Deconnexion
           </button>
         </div>

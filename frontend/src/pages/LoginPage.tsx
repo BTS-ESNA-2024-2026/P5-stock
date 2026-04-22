@@ -1,13 +1,19 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { user, loading, login } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />
+  }
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -15,25 +21,10 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      const body = new URLSearchParams({ username, password })
-      const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
-        },
-        credentials: 'include',
-        body,
-      })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        setError(data.message ?? 'Connexion echouee')
-        return
-      }
-
+      await login(username, password)
       navigate('/dashboard')
-    } catch {
-      setError('Impossible de joindre le backend')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Connexion echouee')
     } finally {
       setIsLoading(false)
     }
