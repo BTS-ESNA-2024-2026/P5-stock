@@ -41,7 +41,7 @@ def create_app():
 
     app.register_blueprint(root_blueprint)
     app.register_blueprint(auth_blueprint)
-    app.register_blueprint(CRUD)
+    app.register_blueprint(CRUD, url_prefix="/api")
     return app
 
 # Create app instance for Gunicorn
