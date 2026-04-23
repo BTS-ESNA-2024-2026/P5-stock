@@ -8,6 +8,7 @@ export default function LoginPage() {
   const { user, loading, login } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [otpCode, setOtpCode] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -21,7 +22,7 @@ export default function LoginPage() {
     setIsLoading(true)
 
     try {
-      await login(username, password)
+      await login(username, password, otpCode || undefined)
       navigate('/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Connexion echouee')
@@ -79,6 +80,21 @@ export default function LoginPage() {
                 required
                 placeholder="Votre mot de passe"
                 autoComplete="current-password"
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="otp_code" className="form-label">Code OTP <span className="subtitle">(si activé)</span></label>
+              <input
+                type="text"
+                id="otp_code"
+                className="form-input"
+                value={otpCode}
+                onChange={(event) => setOtpCode(event.target.value)}
+                placeholder="6 chiffres"
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                maxLength={6}
               />
             </div>
 

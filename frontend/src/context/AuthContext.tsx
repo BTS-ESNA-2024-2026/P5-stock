@@ -6,7 +6,7 @@ import { authFetch, ApiError } from '../api/client'
 interface AuthContextType {
   user: CurrentUser | null
   loading: boolean
-  login: (username: string, password: string) => Promise<void>
+  login: (username: string, password: string, otpCode?: string) => Promise<void>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -32,8 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refresh()
   }, [refresh])
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string, otpCode?: string) => {
     const body = new URLSearchParams({ username, password })
+    if (otpCode) body.append('otp_code', otpCode)
     const res = await fetch('/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },

@@ -3,6 +3,7 @@ import os
 from uuid import UUID
 
 import jwt
+import pyotp
 from flask import Blueprint, redirect, request, make_response, jsonify
 from loguru import logger
 
@@ -27,11 +28,19 @@ def post_login():
         age=20 # minutes
         username = request.form.get('username')
         password = request.form.get('password')
+        otp_code = request.form.get('otp_code')
         user = get_user_by_username(username)
         if not user or not verify_password(password, user.hash):
             return jsonify({
                 'message': 'Username or password incorrect',
             }), 401
+
+        if user.MFA:
+            if not otp_code:
+                return jsonify({'message': 'OTP code required'}), 401
+            totp = pyotp.TOTP(user.MFA)
+            if not totp.verify(otp_code, valid_window=1):
+                return jsonify({'message': 'Invalid OTP code'}), 401
 
         access_payload = {
                 'user_id': str(user.id),
@@ -121,3 +130,30 @@ def post_logout():
     response = make_response(jsonify({'message': 'Logged out'}), 200)
     response.delete_cookie('access_token', path='/')
     return response
+
+
+@auth_blueprint.post("/otp/setup")
+def post_otp_setup():
+    user = jwt_decode(request)
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    uri = totp.provisioning_uri(name=user.username, issuer_name="SGLM")
+    user.MFA = secret
+    user.DE = datetime.utcnow()
+    db.session.commit()
+    logger.info(f"OTP setup for user {user.id}")
+    return jsonify({'secret': secret, 'uri': uri}), 200
+
+
+@auth_blueprint.delete("/otp/setup")
+def delete_otp_setup():
+    user = jwt_decode(request)
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    user.MFA = None
+    user.DE = datetime.utcnow()
+    db.session.commit()
+    logger.info(f"OTP disabled for user {user.id}")
+    return jsonify({'message': 'OTP disabled'}), 200
