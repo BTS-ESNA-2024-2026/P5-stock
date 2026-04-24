@@ -51,6 +51,11 @@ pnpm genkey
 
 This generates `private.pem` and `public.pem` in the backend directory.
 
+### Setup Environment Variables
+```sh
+cp .env.example .env
+```
+
 ### Run the Application
 
 #### Development Mode (Frontend + Backend)
@@ -77,11 +82,13 @@ pnpm start:backend
 ```
 
 ### Docker Setup
-For database and services, see `docker/dev/docker-compose.yml`:
+
+Start the database and services:
 ```sh
-cd docker/dev
-docker compose up
+pnpm docker:dev:up
 ```
+
+This uses the Docker Compose configuration at `docker/dev/docker-compose.yml`.
 
 ### Login Credentials
 Default test credentials:
