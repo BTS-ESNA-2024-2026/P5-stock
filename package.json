@@ -13,11 +13,17 @@
     "build:backend": "pnpm --filter backend run build",
     "lint": "pnpm --parallel -r run lint",
     "lint:frontend": "pnpm --filter frontend lint",
+    "lint:backend": "pnpm --filter backend lint",
     "preview": "pnpm --filter frontend preview",
     "start:backend": "pnpm --filter backend start",
     "install:all": "pnpm install && pnpm --filter backend install",
     "clean": "pnpm --parallel -r --include-dependencies exec rm -rf dist node_modules .next",
-    "genkey": "pnpm --filter backend genkey"
+    "genkey": "pnpm --filter backend genkey",
+    "test": "pnpm --filter frontend test && pnpm --filter backend test",
+    "test:frontend": "pnpm --filter frontend test",
+    "test:backend": "pnpm --filter backend test",
+    "test:coverage": "pnpm --filter frontend test:coverage",
+    "test:ci": "pnpm --filter frontend test:ci && pnpm --filter backend test:ci"
   },
   "engines": {
     "node": ">=24.0.0",
