@@ -10,7 +10,7 @@
     "genkey": "openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048 && openssl pkey -in private.pem -pubout -out public.pem",
     "lint": "uv run ruff check src/",
     "lint:fix": "uv run ruff check src/ --fix",
-    "lint:ci": "uv run ruff check src/ --output-format=github || true",
+    "lint:ci": "uv run ruff check src/ --output-format=github",
     "test": "uv run pytest tests/ -v",
     "test:ci": "uv run pytest tests/ --cov=src --cov-report=xml:coverage.xml --cov-report=term-missing --junitxml=ctrf/junit.xml -v"
   }
