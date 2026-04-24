@@ -6,9 +6,10 @@ on:
       - main
       - new-front
 
-# Needed by ctrf-io/github-actions-ctrf to post PR comments
+# Needed by ctrf-io/github-test-reporter to post PR comments
 permissions:
-  pull-requests: write
+  contents: read       # required by actions/checkout
+  pull-requests: write # required to post PR comments
 
 concurrency:
   group: ci-${{ github.ref }}
