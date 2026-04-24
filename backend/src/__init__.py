@@ -44,5 +44,7 @@ def create_app():
     app.register_blueprint(CRUD, url_prefix="/api")
     return app
 
-# Create app instance for Gunicorn
-app = create_app()
+# Create app instance for Gunicorn (skipped when running under pytest)
+import os as _os
+if not _os.environ.get("PYTEST_CURRENT_TEST") and _os.environ.get("DATABASE_URL"):
+    app = create_app()

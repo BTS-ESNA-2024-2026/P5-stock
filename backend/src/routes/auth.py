@@ -29,6 +29,8 @@ def post_login():
         username = request.form.get('username')
         password = request.form.get('password')
         otp_code = request.form.get('otp_code')
+        if not username or not password:
+            return jsonify({'message': 'Username and password are needed'}), 401
         user = get_user_by_username(username)
         if not user or not verify_password(password, user.hash):
             return jsonify({

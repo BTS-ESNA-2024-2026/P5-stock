@@ -1,27 +1,40 @@
 """
 Pytest configuration and shared fixtures for the P5-stock backend tests.
 
-Uses an in-memory SQLite database and a generated RSA key pair so that tests
-are fully self-contained and do not require a running PostgreSQL instance or
-pre-existing PEM files.
+Local runs: uses SQLite in-memory (DATABASE_URL defaults to sqlite:///:memory:).
+            SEED_SQL is patched to a no-op to avoid PostgreSQL-specific syntax.
+CI runs:    uses a real PostgreSQL service container via DATABASE_URL env var.
+            SEED_SQL runs as-is against PostgreSQL.
+
+A session-scoped RSA key pair is generated so tests never need pre-existing PEM files.
 """
 
 import os
+import tempfile
 import pytest
 from datetime import datetime, timedelta
 from uuid import UUID
-from unittest.mock import patch
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 
-
 # ---------------------------------------------------------------------------
 # Environment — set BEFORE the application modules are imported so that
 # Flask / SQLAlchemy pick up the test values.
 # ---------------------------------------------------------------------------
-os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
+if os.environ.get("CI") == "true":
+    # CI: DATABASE_URL is set by the workflow (PostgreSQL service container).
+    # We use it as-is.  The variable must be present; fail loudly if not.
+    if not os.environ.get("DATABASE_URL"):
+        raise RuntimeError("CI=true but DATABASE_URL is not set.")
+else:
+    # Local development: always create a fresh SQLite temp file so that
+    # tests never touch the dev/prod PostgreSQL database and each run
+    # starts with a clean state.
+    _tmp_db_fd, _tmp_db_path = tempfile.mkstemp(suffix=".db", prefix="p5test_")
+    os.close(_tmp_db_fd)
+    os.environ["DATABASE_URL"] = f"sqlite:///{_tmp_db_path}"
 os.environ.setdefault("FLASK_SECRET_KEY", "test-secret-key-do-not-use-in-prod")
 os.environ.setdefault("FRONTEND_URL", "http://localhost:5173")
 
@@ -76,25 +89,35 @@ def rsa_key_files(tmp_path_factory, rsa_private_key):
 def app(rsa_key_files):
     """
     Create the Flask application configured for testing:
-      - SQLite in-memory database
-      - SEED_SQL patched to a no-op (avoids PostgreSQL-specific syntax)
+      - SQLite in-memory database (local) or PostgreSQL (CI via DATABASE_URL)
+      - SEED_SQL patched to no-op when using SQLite (avoids PG-specific syntax)
       - Rate-limiting disabled
     """
     import src
     from src.services.config import limiter
 
-    original_seed = src.SEED_SQL
-    src.SEED_SQL = "SELECT 1"  # patch before create_app() runs db.session.execute
+    db_url = os.environ.get("DATABASE_URL", "")
+    using_sqlite = db_url.startswith("sqlite")
+
+    if using_sqlite:
+        # src.SEED_SQL is the local name imported by `from src.database.init_db import SEED_SQL`
+        # in src/__init__.py — create_app() reads THIS name, not init_db.SEED_SQL.
+        original_seed = src.SEED_SQL
+        src.SEED_SQL = "SELECT 1"
 
     application = src.create_app()
     application.config["TESTING"] = True
     application.config["WTF_CSRF_ENABLED"] = False
 
-    # Disable rate limiting for tests
+    # Disable rate limiting for tests.
+    # Flask-Limiter 3.7+ caches `self.enabled` at init_app time, so we must
+    # also flip the instance attribute directly; changing app.config alone is
+    # not enough.
     application.config["RATELIMIT_ENABLED"] = False
-    limiter._storage_uri = "memory://"
+    limiter.enabled = False
 
-    src.SEED_SQL = original_seed  # restore (doesn't matter at session scope)
+    if using_sqlite:
+        src.SEED_SQL = original_seed  # restore
 
     yield application
 
@@ -118,15 +141,8 @@ VIEWER_USERNAME = "test_viewer"
 TEST_PASSWORD   = "TestPassword123!"
 
 
-@pytest.fixture(scope="session")
-def db_session(app):
-    """Provide direct access to the DB session within an application context."""
-    with app.app_context():
-        yield
-
-
 @pytest.fixture(scope="session", autouse=True)
-def seed_test_db(app, db_session):
+def seed_test_db(app):
     """
     Insert the minimum set of roles and users needed by the test suite.
     Runs once per session inside an app context.

@@ -27,6 +27,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
       # ── Frontend: ESLint ──────────────────────────────────────────────────
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -47,10 +52,6 @@ jobs:
         run: pnpm lint
 
       # ── Backend: Ruff ─────────────────────────────────────────────────────
-      - name: Install uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: "latest"
 
       - name: Install backend dependencies (including dev extras)
         working-directory: backend
@@ -66,6 +67,21 @@ jobs:
   backend-tests:
     name: Backend (pytest)
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: p5stock_test
+        ports:
+          - 5432:5432
+        options: >
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Checkout
@@ -85,6 +101,10 @@ jobs:
         # ::error:: annotations for every failing test.
         # --junitxml writes ctrf/junit.xml consumed by github-test-reporter.
         working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/p5stock_test
+          FLASK_SECRET_KEY: ci-secret-key-not-for-production
+          FRONTEND_URL: http://localhost:5173
         run: |
           uv run pytest tests/ \
             --cov=src \
@@ -125,6 +145,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
