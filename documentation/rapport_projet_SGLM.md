@@ -553,7 +553,7 @@ def _asset_after_insert(mapper, connection, target):
     connection.execute(Log.__table__.insert().values(
         id=uuid7(),
         asset_id=target.id,
-        D=datetime.utcnow(),
+        D=datetime.now(UTC),
         action='CREATED',
         description=f'Asset created: {target.name} '
                     f'(Type: {target.type_asset_id}, Status: {target.status})',
@@ -869,8 +869,8 @@ Le token JWT est généré côté backend avec une clé RSA privée (`private.pe
 # Génération du token (auth.py)
 access_payload = {
     'user_id': str(user.id),
-    'exp': datetime.utcnow() + timedelta(minutes=20),
-    'iat': datetime.utcnow(),
+    'exp': datetime.now(UTC) + timedelta(minutes=20),
+    'iat': datetime.now(UTC),
     'type': 'access'
 }
 private_key = open('private.pem', 'rb').read()

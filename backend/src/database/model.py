@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 from uuid import UUID
 
@@ -63,8 +63,8 @@ class User(db.Model):  # noqa: F811
         self.id = uuid7()
         self.username = username
         self.group_id = group_id
-        self.DA = datetime.utcnow()
-        self.DE = datetime.utcnow()
+        self.DA = datetime.now(UTC)
+        self.DE = datetime.now(UTC)
         self.hash = hash
         self.hash_algorithm = hash_algorithm
         self.name = name

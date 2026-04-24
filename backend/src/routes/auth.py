@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 import jwt
@@ -45,8 +45,8 @@ def post_login():
 
         access_payload = {
                 'user_id': str(user.id),
-                'exp': datetime.utcnow() + timedelta(minutes=age),
-                'iat': datetime.utcnow(),
+                'exp': datetime.now(UTC) + timedelta(minutes=age),
+                'iat': datetime.now(UTC),
                 'type': 'access'
             }
         private_key = open('private.pem', 'rb').read()
@@ -142,7 +142,7 @@ def post_otp_setup():
     totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(name=user.username, issuer_name="SGLM")
     user.MFA = secret
-    user.DE = datetime.utcnow()
+    user.DE = datetime.now(UTC)
     db.session.commit()
     logger.info(f"OTP setup for user {user.id}")
     return jsonify({'secret': secret, 'uri': uri}), 200
@@ -154,7 +154,7 @@ def delete_otp_setup():
     if not user:
         return jsonify({'error': 'Not authenticated'}), 401
     user.MFA = None
-    user.DE = datetime.utcnow()
+    user.DE = datetime.now(UTC)
     db.session.commit()
     logger.info(f"OTP disabled for user {user.id}")
     return jsonify({'message': 'OTP disabled'}), 200

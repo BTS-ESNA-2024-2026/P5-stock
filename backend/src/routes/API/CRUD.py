@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from functools import wraps
 
 from flask import Blueprint, jsonify, request
@@ -147,7 +147,7 @@ class CRUDHandler:
                     if operation_type == 'create':
                         data = request.json
                         obj = model_class()
-                        t = datetime.utcnow()
+                        t = datetime.now(UTC)
                         obj.DE = t
                         obj.DA = t
                         return create(element, required_fields, acceptable_fields or [], data, obj)
@@ -164,7 +164,7 @@ class CRUDHandler:
 
                     elif operation_type == 'update':
                         data = request.json
-                        obj.DE = datetime.utcnow()
+                        obj.DE = datetime.now(UTC)
                         return update(ID, element, updatable_fields, data, obj)
 
                     elif operation_type == 'delete':

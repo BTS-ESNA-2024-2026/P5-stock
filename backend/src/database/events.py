@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from sqlalchemy import event, inspect
 from uuid_extensions import uuid7
@@ -23,7 +23,7 @@ from src.database.model import (
 @event.listens_for(Asset, 'after_insert')
 def _asset_after_insert(mapper, connection, target):
     connection.execute(Log.__table__.insert().values(
-        id=uuid7(), asset_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), asset_id=target.id, D=datetime.now(UTC),
         action='CREATED',
         description=f'Asset created: {target.name} (Type: {target.type_asset_id}, Status: {target.status})',
     ))
@@ -60,7 +60,7 @@ def _asset_after_update(mapper, connection, target):
 
     if changes:
         connection.execute(Log.__table__.insert().values(
-            id=uuid7(), asset_id=target.id, D=datetime.utcnow(),
+            id=uuid7(), asset_id=target.id, D=datetime.now(UTC),
             action='EDITED', description='; '.join(changes),
         ))
 
@@ -68,7 +68,7 @@ def _asset_after_update(mapper, connection, target):
 @event.listens_for(Asset, 'after_delete')
 def _asset_after_delete(mapper, connection, target):
     connection.execute(Log.__table__.insert().values(
-        id=uuid7(), asset_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), asset_id=target.id, D=datetime.now(UTC),
         action='DELETED',
         description=f'Asset deleted: {target.name} (Type: {target.type_asset_id}, Status: {target.status})',
     ))
@@ -80,7 +80,7 @@ def _asset_after_delete(mapper, connection, target):
 def _value_after_insert(mapper, connection, target):
     connection.execute(Log.__table__.insert().values(
         id=uuid7(), asset_id=target.asset_id, spec_id=target.spec_id,
-        value_id=target.id, D=datetime.utcnow(),
+        value_id=target.id, D=datetime.now(UTC),
         action='CREATED',
         description=f'Value created for asset {target.asset_id}, spec {target.spec_id}: "{target.value}"',
     ))
@@ -92,7 +92,7 @@ def _value_after_update(mapper, connection, target):
     if hist.has_changes() and hist.deleted:
         connection.execute(Log.__table__.insert().values(
             id=uuid7(), asset_id=target.asset_id, spec_id=target.spec_id,
-            value_id=target.id, D=datetime.utcnow(),
+            value_id=target.id, D=datetime.now(UTC),
             action='EDITED',
             description=f'Value updated for asset {target.asset_id}, spec {target.spec_id}: "{hist.deleted[0]}" -> "{target.value}"',
         ))
@@ -102,7 +102,7 @@ def _value_after_update(mapper, connection, target):
 def _value_after_delete(mapper, connection, target):
     connection.execute(Log.__table__.insert().values(
         id=uuid7(), asset_id=target.asset_id, spec_id=target.spec_id,
-        value_id=target.id, D=datetime.utcnow(),
+        value_id=target.id, D=datetime.now(UTC),
         action='DELETED',
         description=f'Value deleted for asset {target.asset_id}, spec {target.spec_id}: "{target.value}"',
     ))
@@ -113,7 +113,7 @@ def _value_after_delete(mapper, connection, target):
 @event.listens_for(Spec, 'after_insert')
 def _spec_after_insert(mapper, connection, target):
     connection.execute(Log.__table__.insert().values(
-        id=uuid7(), spec_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), spec_id=target.id, D=datetime.now(UTC),
         action='CREATED',
         description=f'Spec created: {target.name} (Type: {target.type_id})',
     ))
@@ -129,7 +129,7 @@ def _spec_after_update(mapper, connection, target):
             changes.append(f'{label}: "{hist.deleted[0]}" -> "{getattr(target, attr)}"')
     if changes:
         connection.execute(Log.__table__.insert().values(
-            id=uuid7(), spec_id=target.id, D=datetime.utcnow(),
+            id=uuid7(), spec_id=target.id, D=datetime.now(UTC),
             action='EDITED', description='; '.join(changes),
         ))
 
@@ -137,7 +137,7 @@ def _spec_after_update(mapper, connection, target):
 @event.listens_for(Spec, 'after_delete')
 def _spec_after_delete(mapper, connection, target):
     connection.execute(Log.__table__.insert().values(
-        id=uuid7(), spec_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), spec_id=target.id, D=datetime.now(UTC),
         action='DELETED',
         description=f'Spec deleted: {target.name} (Type: {target.type_id})',
     ))
@@ -148,7 +148,7 @@ def _spec_after_delete(mapper, connection, target):
 @event.listens_for(User, 'after_insert')
 def _user_after_insert(mapper, connection, target):
     connection.execute(LogAdmin.__table__.insert().values(
-        id=uuid7(), user_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), user_id=target.id, D=datetime.now(UTC),
         action='CREATED',
         desc=f'User created: {target.username} (Group: {target.group_id})',
     ))
@@ -194,7 +194,7 @@ def _user_after_update(mapper, connection, target):
 
     if changes:
         connection.execute(LogAdmin.__table__.insert().values(
-            id=uuid7(), user_id=target.id, D=datetime.utcnow(),
+            id=uuid7(), user_id=target.id, D=datetime.now(UTC),
             action=action, desc='; '.join(changes),
         ))
 
@@ -202,7 +202,7 @@ def _user_after_update(mapper, connection, target):
 @event.listens_for(User, 'after_delete')
 def _user_after_delete(mapper, connection, target):
     connection.execute(LogAdmin.__table__.insert().values(
-        id=uuid7(), user_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), user_id=target.id, D=datetime.now(UTC),
         action='DELETED',
         desc=f'User deleted: {target.username} (Group: {target.group_id})',
     ))
@@ -213,7 +213,7 @@ def _user_after_delete(mapper, connection, target):
 @event.listens_for(Mission, 'after_insert')
 def _mission_after_insert(mapper, connection, target):
     connection.execute(LogMission.__table__.insert().values(
-        id=uuid7(), mission_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), mission_id=target.id, D=datetime.now(UTC),
         action='CREATED',
         description=f'Mission created: {target.title} (Theatre: {target.theatre}, Status: {target.status})',
     ))
@@ -247,7 +247,7 @@ def _mission_after_update(mapper, connection, target):
 
     if changes:
         connection.execute(LogMission.__table__.insert().values(
-            id=uuid7(), mission_id=target.id, D=datetime.utcnow(),
+            id=uuid7(), mission_id=target.id, D=datetime.now(UTC),
             action='EDITED', description='; '.join(changes),
         ))
 
@@ -255,7 +255,7 @@ def _mission_after_update(mapper, connection, target):
 @event.listens_for(Mission, 'after_delete')
 def _mission_after_delete(mapper, connection, target):
     connection.execute(LogMission.__table__.insert().values(
-        id=uuid7(), mission_id=target.id, D=datetime.utcnow(),
+        id=uuid7(), mission_id=target.id, D=datetime.now(UTC),
         action='DELETED',
         description=f'Mission deleted: {target.title} (Theatre: {target.theatre}, Status: {target.status})',
     ))

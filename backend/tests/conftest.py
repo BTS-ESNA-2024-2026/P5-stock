@@ -12,7 +12,7 @@ A session-scoped RSA key pair is generated so tests never need pre-existing PEM 
 import os
 import tempfile
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 from uuid import UUID
 
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -208,8 +208,8 @@ def make_token(user_id: str, private_key, expired: bool = False) -> str:
     delta = timedelta(hours=-1) if expired else timedelta(hours=1)
     payload = {
         "user_id": user_id,
-        "exp": datetime.utcnow() + delta,
-        "iat": datetime.utcnow(),
+        "exp": datetime.now(UTC) + delta,
+        "iat": datetime.now(UTC),
         "type": "access",
     }
     return pyjwt.encode(payload, private_pem, algorithm="RS256")

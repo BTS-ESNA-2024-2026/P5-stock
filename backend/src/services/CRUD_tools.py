@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 
 from flask import jsonify
@@ -60,7 +60,7 @@ def update(ID, element, updatable_fields, data, obj=None) :
                     return ifield_err(element, mode, data)
         if not updated:
             return mfield_err(element, mode, data)
-        obj.DE = datetime.utcnow() # even if element doesn not have DE, DB will just ignore it so leave active
+        obj.DE = datetime.now(UTC) # even if element doesn not have DE, DB will just ignore it so leave active
         return commit(element, obj, mode)
     except Exception as e:
         return ukn_err(element, mode, e)
