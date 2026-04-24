@@ -19,7 +19,7 @@
     "install:all": "pnpm install && pnpm --filter backend install",
     "clean": "pnpm --parallel -r --include-dependencies exec rm -rf dist node_modules .next",
     "genkey": "pnpm --filter backend genkey",
-    "docker:dev:up": "docker compose -f docker/dev/docker-compose.yml up",
+    "docker:dev:up": "docker compose -f docker/dev/docker-compose.yml up --env-file=.env",
     "docker:dev:down": "docker compose -f docker/dev/docker-compose.yml down",
     "docker:dev:rm": "docker compose -f docker/dev/docker-compose.yml down --rmi all --volumes",
     "test": "pnpm --filter frontend test && pnpm --filter backend test",
