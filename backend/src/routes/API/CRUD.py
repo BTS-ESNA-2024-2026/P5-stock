@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from functools import wraps
 
 from flask import Blueprint, jsonify, request
@@ -116,6 +116,34 @@ def list_users():
 def list_roles():
     roles = db.session.query(Role).all()
     return jsonify([_serialize_obj(r) for r in roles]), 200
+
+
+@CRUD.get("/specs")
+@require_viewer
+def list_specs():
+    specs = db.session.query(Spec).all()
+    result = []
+    for s in specs:
+        item = _serialize_obj(s)
+        if s.asset_type:
+            item['type_name'] = s.asset_type.type
+        result.append(item)
+    return jsonify(result), 200
+
+
+@CRUD.get("/asset/<uuid:ID>/values")
+@require_viewer
+def list_asset_values(ID):
+    asset = db.session.query(Asset).filter(Asset.id == ID).first()
+    if not asset:
+        return nf_err("asset", [])
+    result = []
+    for v in asset.values:
+        item = _serialize_obj(v)
+        if v.spec:
+            item['spec_name'] = v.spec.name
+        result.append(item)
+    return jsonify(result), 200
 
 
 @CRUD.get("/logs")

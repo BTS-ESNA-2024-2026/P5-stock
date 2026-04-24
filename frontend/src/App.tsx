@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import AdminPage from './pages/AdminPage'
+import AssetTypesPage from './pages/AssetTypesPage'
 import AssetsPage from './pages/AssetsPage'
+import BasesPage from './pages/BasesPage'
 import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import MissionsPage from './pages/MissionsPage'
@@ -31,6 +33,8 @@ function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
       <Route path="/assets" element={<ProtectedRoute><AssetsPage /></ProtectedRoute>} />
+      <Route path="/asset-types" element={<ProtectedRoute><AssetTypesPage /></ProtectedRoute>} />
+      <Route path="/bases" element={<ProtectedRoute><BasesPage /></ProtectedRoute>} />
       <Route path="/missions" element={<ProtectedRoute><MissionsPage /></ProtectedRoute>} />
       <Route path="/adminpanel" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><PlaceholderPage title="Utilisateurs" subtitle="Gestion des comptes et permissions." /></ProtectedRoute>} />

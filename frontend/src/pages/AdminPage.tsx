@@ -46,7 +46,6 @@ export default function AdminPage() {
           <button className="btn btn-secondary btn-sm" onClick={loadData} disabled={loading}>
             {loading ? 'Chargement...' : '&#8635; Actualiser'}
           </button>
-          <span className="chip">Audit actif</span>
         </div>
       </section>
 

@@ -36,18 +36,12 @@ export default function LoginPage() {
       <header className="topbar">
         <div className="brand">
           <span className="brand-mark">PSSTOCK</span>
-          <span className="brand-sub">secure access</span>
-        </div>
-        <div className="top-actions">
-          <span className="chip">Centre logistique</span>
-          <span className="chip">Acces securise</span>
         </div>
       </header>
 
       <main className="auth">
         <div className="auth-card">
           <div className="auth-header">
-            <span className="brand-sub">Portail operationnel</span>
             <div className="auth-title">Connexion</div>
             <p className="subtitle">Acces au tableau de bord et a la supervision PSSTOCK.</p>
           </div>
@@ -98,20 +92,10 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="flex gap-1 mb-2 row-between">
-              <span className="brand-sub">Authentification chiffree</span>
-              <a href="#" className="subtitle" aria-label="Mot de passe oublie">Mot de passe oublie ?</a>
-            </div>
-
             <button type="submit" className="btn btn-primary full-width" disabled={isLoading}>
               {isLoading ? 'Connexion...' : 'Se connecter'}
             </button>
           </form>
-
-          <div className="flex gap-1 mt-2 wrap-center">
-            <span className="chip">Tracabilite active</span>
-            <span className="chip">Surveillance 24/7</span>
-          </div>
         </div>
       </main>
     </div>

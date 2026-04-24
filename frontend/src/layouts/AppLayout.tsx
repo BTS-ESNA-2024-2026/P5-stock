@@ -9,6 +9,8 @@ type AppLayoutProps = {
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/assets', label: 'Assets' },
+  { to: '/asset-types', label: 'Types' },
+  { to: '/bases', label: 'Bases' },
   { to: '/missions', label: 'Missions' },
   { to: '/users', label: 'Utilisateurs' },
   { to: '/reports', label: 'Rapports' },

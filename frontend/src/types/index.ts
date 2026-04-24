@@ -44,6 +44,23 @@ export interface AssetType {
   type: string
 }
 
+export interface Spec {
+  id: string
+  type_id: string
+  name: string
+  type_name?: string
+}
+
+export interface Value {
+  id: string
+  asset_id: string
+  spec_id: string
+  DA: string
+  DE: string
+  value: string
+  spec_name?: string
+}
+
 export interface Mission {
   id: string
   DA: string

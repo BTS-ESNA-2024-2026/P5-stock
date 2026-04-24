@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID
 
 from flask import jsonify
@@ -19,6 +19,18 @@ def _serialize_value(val):
 
 #mode : ["read", "create", "update", "delete"]
 
+def _coerce_value(obj, field, value):
+    """Coerce string UUIDs to uuid.UUID objects for Uuid-typed columns."""
+    if isinstance(value, str):
+        col = obj.__table__.columns.get(field)
+        if col is not None and hasattr(col.type, 'python_type'):
+            try:
+                if col.type.python_type is UUID:
+                    return UUID(value)
+            except Exception:
+                pass
+    return value
+
 def create(element, required_fields, acceptable_fields, data, obj=None) :
     mode = "create"
     try:
@@ -29,7 +41,7 @@ def create(element, required_fields, acceptable_fields, data, obj=None) :
         try:
             for field in allowed :
                 if field in data :
-                    setattr(obj, field, data[field])
+                    setattr(obj, field, _coerce_value(obj, field, data[field]))
         except Exception:
             return ifield_err(element, mode, data)
         return commit(element, obj, mode)
@@ -54,7 +66,7 @@ def update(ID, element, updatable_fields, data, obj=None) :
         for field in updatable_fields: # filter out extra fields / injections by default
             if field in data:
                 try :
-                    setattr(obj, field, data[field])
+                    setattr(obj, field, _coerce_value(obj, field, data[field]))
                     updated = True
                 except Exception:
                     return ifield_err(element, mode, data)

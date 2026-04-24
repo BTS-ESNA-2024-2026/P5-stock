@@ -1,13 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import AppLayout from '../layouts/AppLayout'
-import { fetchAssets, fetchAssetTypes, fetchRooms, createAsset, updateAsset, deleteAsset } from '../api/assets'
-import type { Asset, AssetType, Room, AssetStatus } from '../types'
+import { fetchAssets, fetchAssetTypes, fetchRooms, fetchSpecs, createAsset, updateAsset, deleteAsset, fetchAssetValues, createValue, updateValue, deleteValue } from '../api/assets'
+import { useAuth } from '../context/AuthContext'
+import type { Asset, AssetType, Room, AssetStatus, Spec, Value } from '../types'
 import { ASSET_STATUS_LABELS, ASSET_STATUS_BADGE } from '../types'
 
 const ALL_STATUSES: AssetStatus[] = ['STOCK', 'DESTROYED', 'SOLD', 'LOST', 'TRANSIT', 'PURCHASED']
+const ROLE_HIERARCHY = ['viewer', 'user', 'secure_user', 'technician', 'admin']
+function canEdit(role: string | undefined) {
+  return ROLE_HIERARCHY.indexOf(role ?? '') >= ROLE_HIERARCHY.indexOf('technician')
+}
 
 export default function AssetsPage() {
+  const { user } = useAuth()
+  const editable = canEdit(user?.role)
+
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -16,9 +24,21 @@ export default function AssetsPage() {
   const [assets, setAssets] = useState<Asset[]>([])
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
+  const [specs, setSpecs] = useState<Spec[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+
+  // Values modal
+  const [showValuesModal, setShowValuesModal] = useState(false)
+  const [valuesAsset, setValuesAsset] = useState<Asset | null>(null)
+  const [assetValues, setAssetValues] = useState<Value[]>([])
+  const [valuesLoading, setValuesLoading] = useState(false)
+  const [editingValueId, setEditingValueId] = useState<string | null>(null)
+  const [valueForm, setValueForm] = useState('')
+  const [valueSpecId, setValueSpecId] = useState('')
+  const [savingValue, setSavingValue] = useState(false)
+  const [valueError, setValueError] = useState('')
 
   const [form, setForm] = useState({
     type_asset_id: '',
@@ -34,10 +54,11 @@ export default function AssetsPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [a, t, r] = await Promise.all([fetchAssets(), fetchAssetTypes(), fetchRooms()])
+      const [a, t, r, s] = await Promise.all([fetchAssets(), fetchAssetTypes(), fetchRooms(), fetchSpecs()])
       setAssets(a)
       setAssetTypes(t)
       setRooms(r)
+      setSpecs(s)
     } catch {
       setError('Erreur de chargement')
     } finally {
@@ -121,6 +142,80 @@ export default function AssetsPage() {
     }
   }
 
+  const openValuesModal = async (asset: Asset) => {
+    setValuesAsset(asset)
+    setValuesLoading(true)
+    setValueError('')
+    setEditingValueId(null)
+    setValueForm('')
+    setValueSpecId('')
+    setShowValuesModal(true)
+    try {
+      setAssetValues(await fetchAssetValues(asset.id))
+    } catch {
+      setValueError('Erreur de chargement des valeurs')
+    } finally {
+      setValuesLoading(false)
+    }
+  }
+
+  const startEditValue = (v: Value) => {
+    setEditingValueId(v.id)
+    setValueSpecId(v.spec_id)
+    setValueForm(v.value)
+    setValueError('')
+  }
+
+  const startAddValue = (specId: string) => {
+    setEditingValueId(null)
+    setValueSpecId(specId)
+    setValueForm('')
+    setValueError('')
+  }
+
+  const cancelValueEdit = () => {
+    setEditingValueId(null)
+    setValueSpecId('')
+    setValueForm('')
+    setValueError('')
+  }
+
+  const saveValue = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!valuesAsset) return
+    setSavingValue(true)
+    setValueError('')
+    try {
+      if (editingValueId) {
+        await updateValue(editingValueId, { value: valueForm })
+      } else {
+        await createValue({ asset_id: valuesAsset.id, spec_id: valueSpecId, value: valueForm })
+      }
+      setAssetValues(await fetchAssetValues(valuesAsset.id))
+      cancelValueEdit()
+    } catch (err) {
+      setValueError(err instanceof Error ? err.message : 'Erreur')
+    } finally {
+      setSavingValue(false)
+    }
+  }
+
+  const handleDeleteValue = async (id: string) => {
+    if (!confirm('Supprimer cette valeur ?')) return
+    if (!valuesAsset) return
+    try {
+      await deleteValue(id)
+      setAssetValues(await fetchAssetValues(valuesAsset.id))
+    } catch (err) {
+      setValueError(err instanceof Error ? err.message : 'Erreur de suppression')
+    }
+  }
+
+  // Specs for the currently viewed asset's type
+  const specsForAsset = valuesAsset
+    ? specs.filter((s) => s.type_id === valuesAsset.type_asset_id)
+    : []
+
   return (
     <AppLayout>
       <section className="page-hero">
@@ -203,6 +298,7 @@ export default function AssetsPage() {
                   </td>
                   <td>{asset.room_name ?? '—'}{asset.base_name ? ` (${asset.base_name})` : ''}</td>
                   <td className="flex gap-1">
+                    <button className="btn btn-sm btn-secondary" onClick={() => openValuesModal(asset)}>Specs</button>
                     <button className="btn btn-sm btn-secondary" onClick={() => openEditModal(asset)}>Edit</button>
                     <button className="btn btn-sm btn-danger" onClick={() => handleDelete(asset.id)}>Supprimer</button>
                   </td>
@@ -314,6 +410,87 @@ export default function AssetsPage() {
               <button type="button" className="btn btn-secondary flex-grow" onClick={() => setShowModal(false)}>Annuler</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      {/* Modal valeurs / specs */}
+      <div className={`modal${showValuesModal ? ' active' : ''}`}>
+        <div className="modal-content" style={{ maxWidth: '640px' }}>
+          <div className="modal-header">
+            <h3>Specs — {valuesAsset?.name ?? ''}</h3>
+            <button className="modal-close" onClick={() => { setShowValuesModal(false); cancelValueEdit() }} aria-label="Fermer">&times;</button>
+          </div>
+
+          {valueError ? <div className="alert alert-danger">{valueError}</div> : null}
+
+          {valuesLoading ? (
+            <div className="text-center" style={{ padding: '1.5rem' }}>Chargement...</div>
+          ) : specsForAsset.length === 0 ? (
+            <div className="alert" style={{ marginBottom: '1rem' }}>
+              Aucune spec definie pour ce type d'asset. Ajoutez-en depuis la page <strong>Types</strong>.
+            </div>
+          ) : (
+            <table style={{ marginBottom: '1rem' }}>
+              <thead>
+                <tr>
+                  <th>Spec</th>
+                  <th>Valeur</th>
+                  {editable && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {specsForAsset.map((spec) => {
+                  const existing = assetValues.find((v) => v.spec_id === spec.id)
+                  const isEditing = (editingValueId === (existing?.id ?? null) || (valueSpecId === spec.id && !editingValueId && !existing)) && (editingValueId !== null || valueSpecId === spec.id)
+
+                  return (
+                    <tr key={spec.id}>
+                      <td>{spec.name}</td>
+                      <td>
+                        {isEditing ? (
+                          <form onSubmit={saveValue} style={{ display: 'flex', gap: '0.5rem' }}>
+                            <input
+                              type="text"
+                              className="form-input"
+                              value={valueForm}
+                              onChange={(e) => setValueForm(e.target.value)}
+                              placeholder="Valeur..."
+                              required
+                              autoFocus
+                              style={{ flex: 1 }}
+                            />
+                            <button type="submit" className="btn btn-sm btn-primary" disabled={savingValue}>
+                              {savingValue ? '...' : '✓'}
+                            </button>
+                            <button type="button" className="btn btn-sm btn-secondary" onClick={cancelValueEdit}>✕</button>
+                          </form>
+                        ) : (
+                          existing ? existing.value : <span style={{ opacity: 0.4 }}>—</span>
+                        )}
+                      </td>
+                      {editable && !isEditing && (
+                        <td className="flex gap-1">
+                          {existing ? (
+                            <>
+                              <button className="btn btn-sm btn-secondary" onClick={() => startEditValue(existing)}>Edit</button>
+                              <button className="btn btn-sm btn-danger" onClick={() => handleDeleteValue(existing.id)}>✕</button>
+                            </>
+                          ) : (
+                            <button className="btn btn-sm btn-secondary" onClick={() => startAddValue(spec.id)}>+ Saisir</button>
+                          )}
+                        </td>
+                      )}
+                      {editable && isEditing && <td />}
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          )}
+
+          <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => { setShowValuesModal(false); cancelValueEdit() }}>
+            Fermer
+          </button>
         </div>
       </div>
     </AppLayout>
