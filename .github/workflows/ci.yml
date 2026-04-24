@@ -39,7 +39,6 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -157,7 +156,6 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
@@ -176,7 +174,7 @@ jobs:
         uses: ctrf-io/github-test-reporter@v1
         if: always()
         with:
-          report-path: 'frontend/ctrf/ctrf-report.json'
+          report-path: 'frontend/vitest-ctrf/report.json'
           pull-request-report: true
           title: "Frontend (vitest)"
           annotate: true
