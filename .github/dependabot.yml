@@ -1,0 +1,108 @@
+version: 2
+updates:
+  # Python dependencies (backend)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "BTS-ESNA-2024-2026/maintainers"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+
+  # Node.js dependencies (frontend)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "BTS-ESNA-2024-2026/maintainers"
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "chore(deps):"
+      include: "scope"
+    pull-request-branch-name:
+      separator: "/"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:30"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "BTS-ESNA-2024-2026/maintainers"
+    labels:
+      - "dependencies"
+      - "ci/cd"
+    commit-message:
+      prefix: "ci:"
+      include: "scope"
+
+  # Docker images (development)
+  - package-ecosystem: "docker"
+    directory: "/docker/dev"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:45"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "BTS-ESNA-2024-2026/maintainers"
+    labels:
+      - "dependencies"
+      - "docker"
+    commit-message:
+      prefix: "chore(docker):"
+      include: "scope"
+
+  # Docker images (production)
+  - package-ecosystem: "docker"
+    directory: "/docker/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "03:50"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "BTS-ESNA-2024-2026/maintainers"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "production"
+    commit-message:
+      prefix: "chore(docker):"
+      include: "scope"
+
+  # Devcontainer
+  - package-ecosystem: "devcontainers"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "BTS-ESNA-2024-2026/maintainers"
+    labels:
+      - "dependencies"
+      - "devcontainer"
+    commit-message:
+      prefix: "chore(devcontainer):"
+      include: "scope"
