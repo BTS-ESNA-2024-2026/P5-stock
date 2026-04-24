@@ -1,15 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import type { ReactNode } from 'react'
+import type { AuthContextType } from './types'
 import type { CurrentUser } from '../types'
 import { authFetch, ApiError } from '../api/client'
-
-interface AuthContextType {
-  user: CurrentUser | null
-  loading: boolean
-  login: (username: string, password: string, otpCode?: string) => Promise<void>
-  logout: () => Promise<void>
-  refresh: () => Promise<void>
-}
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
