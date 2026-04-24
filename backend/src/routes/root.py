@@ -1,7 +1,8 @@
 import os
-from flask import Blueprint, redirect, send_from_directory, jsonify
-from src.services.decorators import require_technician, require_viewer, require_user
-from loguru import logger
+
+from flask import Blueprint, jsonify, redirect, send_from_directory
+
+from src.services.decorators import require_technician
 
 root_blueprint = Blueprint("root", __name__)
 

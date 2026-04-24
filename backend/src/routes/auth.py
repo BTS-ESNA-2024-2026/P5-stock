@@ -1,15 +1,14 @@
-from datetime import datetime, timedelta
 import os
+from datetime import datetime, timedelta
 from uuid import UUID
 
 import jwt
 import pyotp
-from flask import Blueprint, redirect, request, make_response, jsonify
+from flask import Blueprint, jsonify, make_response, redirect, request
 from loguru import logger
 
-from src.database.model import db, User, ph
+from src.database.model import User, db, ph
 from src.services.config import limiter
-from src.services.decorators import require_admin
 from src.services.tools import get_user_by_username, jwt_decode, validate_username, verify_password
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")

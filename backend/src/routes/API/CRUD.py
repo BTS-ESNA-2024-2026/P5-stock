@@ -1,8 +1,23 @@
-from src.services.decorators import *
-from src.database.model import db, Room, Base_, Asset, AssetType, Spec, Value, Mission, User, Role, Log, LogMission, LogAdmin
-from flask import Blueprint, request, jsonify
-from src.services.CRUD_tools import create, read, update, delete, err, nf_err, _serialize_value
 from datetime import datetime
+from functools import wraps
+
+from flask import Blueprint, jsonify, request
+
+from src.database.model import (
+    Asset,
+    AssetType,
+    Base_,
+    Log,
+    Mission,
+    Role,
+    Room,
+    Spec,
+    User,
+    Value,
+    db,
+)
+from src.services.CRUD_tools import _serialize_value, create, delete, err, nf_err, read, update
+from src.services.decorators import require_admin, require_technician, require_viewer
 
 CRUD = Blueprint("CRUD", __name__)
 
@@ -108,17 +123,17 @@ def list_roles():
 def list_logs():
     logs = db.session.query(Log).order_by(Log.D.desc()).limit(50).all()
     result = []
-    for l in logs:
-        item = _serialize_obj(l)
-        if l.asset:
-            item['asset_name'] = l.asset.name
+    for log_entry in logs:
+        item = _serialize_obj(log_entry)
+        if log_entry.asset:
+            item['asset_name'] = log_entry.asset.name
         result.append(item)
     return jsonify(result), 200
 
 class CRUDHandler:
     @staticmethod
     def crud_operation(model_class, element, operation_type,
-        required_fields=None, 
+        required_fields=None,
         acceptable_fields=None,
         updatable_fields=None):
 
@@ -136,39 +151,39 @@ class CRUDHandler:
                         obj.DE = t
                         obj.DA = t
                         return create(element, required_fields, acceptable_fields or [], data, obj)
-                        
+
                     #existing object section
                     ID = kwargs.get('ID')
                     obj = db.session.query(model_class).filter(model_class.id == ID).first()
-                    
+
                     if not obj:
-                        return nf_err(element, args) 
+                        return nf_err(element, args)
 
                     if operation_type == 'get':
                         return read(ID, element, obj)
-                    
+
                     elif operation_type == 'update':
                         data = request.json
                         obj.DE = datetime.utcnow()
                         return update(ID, element, updatable_fields, data, obj)
-                    
+
                     elif operation_type == 'delete':
                         return delete(ID, element, obj)
 
                 except Exception as e:
                     db.session.rollback()
-                    return err(500, "Internal server error", e, *args, **kwargs) 
-                return err(500, "Internal server error", *args, **kwargs) 
+                    return err(500, "Internal server error", e, *args, **kwargs)
+                return err(500, "Internal server error", *args, **kwargs)
 
             return wrapper
         return decorator
 
 
 
-# - - - - - - - - ROOM - - - - - - - - 
+# - - - - - - - - ROOM - - - - - - - -
 @CRUD.post("/room")
 @require_technician
-@CRUDHandler.crud_operation(Room, "room", "create", 
+@CRUDHandler.crud_operation(Room, "room", "create",
     required_fields=["base_id", "room"])
 def insert_room():
     pass
@@ -181,7 +196,7 @@ def get_room(ID):
 
 @CRUD.put("/room/<uuid:ID>")
 @require_technician
-@CRUDHandler.crud_operation(Room, "room", "update", 
+@CRUDHandler.crud_operation(Room, "room", "update",
     updatable_fields=['base_id', 'room'])
 def update_room(ID):
     pass
@@ -194,10 +209,10 @@ def delete_room(ID):
 
 
 
-# - - - - - - - - BASE - - - - - - - - 
+# - - - - - - - - BASE - - - - - - - -
 @CRUD.post("/base")
 @require_technician
-@CRUDHandler.crud_operation(Base_, "base", "create", 
+@CRUDHandler.crud_operation(Base_, "base", "create",
     required_fields=["name", "address"])
 def insert_base():
     pass
@@ -210,7 +225,7 @@ def get_base(ID):
 
 @CRUD.put("/base/<uuid:ID>")
 @require_technician
-@CRUDHandler.crud_operation(Base_, "base", "update", 
+@CRUDHandler.crud_operation(Base_, "base", "update",
     updatable_fields=['name', 'address'])
 def update_base(ID):
     pass
@@ -226,7 +241,7 @@ def delete_base(ID):
 # - - - - - - - - ASSET - - - - - - - - --> TO BE DONE need ENUM verification with fetch from DB
 @CRUD.post("/asset")
 @require_technician
-@CRUDHandler.crud_operation(Asset, "asset", "create", 
+@CRUDHandler.crud_operation(Asset, "asset", "create",
     #required_fields=["type_asset_id", "name", "status"],
     required_fields=["type_asset_id","name", "status"],
     acceptable_fields=["mission_id", "room_id", "number", "quantity", "shelf", "sensible"])
@@ -241,7 +256,7 @@ def get_asset(ID):
 
 @CRUD.put("/asset/<uuid:ID>")
 @require_technician
-@CRUDHandler.crud_operation(Asset, "asset", "update", 
+@CRUDHandler.crud_operation(Asset, "asset", "update",
     updatable_fields=["mission_id", "room_id", "name", "number", "status", "quantity", "shelf", "sensible"])
 def update_asset(ID):
     pass
@@ -254,10 +269,10 @@ def delete_asset(ID):
 
 
 
-# - - - - - - - - ASSET_TYPE - - - - - - - - 
+# - - - - - - - - ASSET_TYPE - - - - - - - -
 @CRUD.post("/asset_type")
 @require_technician
-@CRUDHandler.crud_operation(AssetType, "asset_type", "create", 
+@CRUDHandler.crud_operation(AssetType, "asset_type", "create",
     required_fields=["type"])
 def insert_asset_type():
     pass
@@ -270,7 +285,7 @@ def get_asset_type(ID):
 
 @CRUD.put("/asset_type/<uuid:ID>")
 @require_technician
-@CRUDHandler.crud_operation(AssetType, "asset_type", "update", 
+@CRUDHandler.crud_operation(AssetType, "asset_type", "update",
     updatable_fields=["type"])
 def update_asset_type(ID):
     pass
@@ -283,10 +298,10 @@ def delete_asset_type(ID):
 
 
 
-# - - - - - - - - SPEC - - - - - - - - 
+# - - - - - - - - SPEC - - - - - - - -
 @CRUD.post("/spec")
 @require_technician
-@CRUDHandler.crud_operation(Spec, "spec", "create", 
+@CRUDHandler.crud_operation(Spec, "spec", "create",
     required_fields=["type_id", "name"])
 def insert_spec():
     pass
@@ -299,7 +314,7 @@ def get_spec(ID):
 
 @CRUD.put("/spec/<uuid:ID>")
 @require_technician
-@CRUDHandler.crud_operation(Spec, "spec", "update", 
+@CRUDHandler.crud_operation(Spec, "spec", "update",
     updatable_fields=["type_id", "name"])
 def update_spec(ID):
     pass
@@ -311,10 +326,10 @@ def delete_spec(ID):
     pass
 
 
-# - - - - - - - - VALUE - - - - - - - - 
+# - - - - - - - - VALUE - - - - - - - -
 @CRUD.post("/value")
 @require_technician
-@CRUDHandler.crud_operation(Value, "value", "create", 
+@CRUDHandler.crud_operation(Value, "value", "create",
     required_fields=["asset_id", "spec_id", "value"])
 def insert_value():
     pass
@@ -327,7 +342,7 @@ def get_value(ID):
 
 @CRUD.put("/value/<uuid:ID>")
 @require_technician
-@CRUDHandler.crud_operation(Value, "value", "update", 
+@CRUDHandler.crud_operation(Value, "value", "update",
     updatable_fields=["asset_id", "spec_id", "value"])
 def update_value(ID):
     pass
@@ -341,10 +356,10 @@ def delete_value(ID):
 
 
 
-# - - - - - - - - MISSION - - - - - - - - 
+# - - - - - - - - MISSION - - - - - - - -
 @CRUD.post("/mission")
 @require_technician
-@CRUDHandler.crud_operation(Mission, "mission", "create", 
+@CRUDHandler.crud_operation(Mission, "mission", "create",
     required_fields=["title", "status", "theatre"],
     acceptable_fields=["date_start", "date_end", "description"])
 def insert_mission():
@@ -358,7 +373,7 @@ def get_mission(ID):
 
 @CRUD.put("/mission/<uuid:ID>")
 @require_technician
-@CRUDHandler.crud_operation(Mission, "mission", "update", 
+@CRUDHandler.crud_operation(Mission, "mission", "update",
     updatable_fields=["title", "status", "theatre", "date_start", "date_end", "description"])
 def update_mission(ID):
     pass

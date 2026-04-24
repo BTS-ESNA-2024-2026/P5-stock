@@ -1,10 +1,11 @@
-from uuid import UUID
-from loguru import logger
-from flask import jsonify
 from datetime import datetime
-from sqlalchemy.exc import ProgrammingError
-#from traceback import print_exc as trcb
+from uuid import UUID
 
+from flask import jsonify
+from loguru import logger
+from sqlalchemy.exc import ProgrammingError
+
+#from traceback import print_exc as trcb
 from src.database.model import db
 
 
@@ -29,7 +30,7 @@ def create(element, required_fields, acceptable_fields, data, obj=None) :
             for field in allowed :
                 if field in data :
                     setattr(obj, field, data[field])
-        except BaseError as e:
+        except Exception:
             return ifield_err(element, mode, data)
         return commit(element, obj, mode)
     except Exception as e:
@@ -55,7 +56,7 @@ def update(ID, element, updatable_fields, data, obj=None) :
                 try :
                     setattr(obj, field, data[field])
                     updated = True
-                except BaseError as e:
+                except Exception:
                     return ifield_err(element, mode, data)
         if not updated:
             return mfield_err(element, mode, data)
@@ -113,11 +114,11 @@ def ifield_err(elem, mode="create", *args): # invalid field
 def nf_err(elem, mode="create", *args): #not found, mode for consistency sake
     logger.error(f"Failed to find {elem}, {str(*args)}")
     return jsonify({
-        'message': f'Unable to find requested element, please check item ID',
+        'message': 'Unable to find requested element, please check item ID',
         'status': 'error'
     }), 404
 
-def success(elem, mode="create", *args): 
+def success(elem, mode="create", *args):
     past = {"read" : "red", "create" : "created", "update" : "updated", "delete" : "deleted"}
     logger.info(f"New {elem} {past[mode]} : {str(*args)}")
     return jsonify({

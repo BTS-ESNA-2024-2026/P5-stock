@@ -1,5 +1,6 @@
-from flask import request, jsonify
+from flask import jsonify, request
 from loguru import logger
+
 from src.services.tools import jwt_decode
 
 

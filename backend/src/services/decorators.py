@@ -1,8 +1,8 @@
-import os
-from functools import wraps
-from flask import request, jsonify, current_app
-import jwt
 import random as r
+from functools import wraps
+
+import jwt
+from flask import jsonify, request
 
 from src.services.tools import jwt_decode
 

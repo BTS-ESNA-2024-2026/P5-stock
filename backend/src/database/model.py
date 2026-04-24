@@ -1,26 +1,20 @@
 from datetime import datetime
+from typing import List, Optional
 from uuid import UUID
 
 from argon2 import PasswordHasher
-from sqlalchemy import (
-    Boolean, DateTime, Enum, ForeignKey, Text, String, Uuid, JSON
-)
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from typing import Optional, List
-from uuid_extensions import uuid7
-from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
-
-class Base(DeclarativeBase):
-    pass
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, String, Text, Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from uuid_extensions import uuid7
 
 db = SQLAlchemy()
-Base = db.Model
 migrate = Migrate()
 ph = PasswordHasher()
 
-class Role(Base):
+
+class Role(db.Model):  # noqa: F811
     __tablename__ = "role"
     __table_args__ = {"comment": "admin, user, viewer, technician"}
 
@@ -35,7 +29,7 @@ class Role(Base):
     users: Mapped[List["User"]] = relationship(back_populates="role")
 
 
-class User(Base):
+class User(db.Model):  # noqa: F811
     __tablename__ = "user"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
@@ -63,7 +57,7 @@ class User(Base):
         back_populates="user", foreign_keys="LogAdmin.user_id"
     )
 
-    def __init__(self, username: str, group_id, 
+    def __init__(self, username: str, group_id,
         hash: str, hash_algorithm: str, name: Optional[str] = None,
         MFA: Optional[str] = None, active: bool = True):
         self.id = uuid7()
@@ -78,7 +72,7 @@ class User(Base):
         self.active = active
 
 
-class Base_(Base):
+class Base_(db.Model):  # noqa: F811
     __tablename__ = "base"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
@@ -89,7 +83,7 @@ class Base_(Base):
     rooms: Mapped[List["Room"]] = relationship(back_populates="base")
 
 
-class Room(Base):
+class Room(db.Model):  # noqa: F811
     __tablename__ = "room"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
@@ -103,7 +97,7 @@ class Room(Base):
     assets: Mapped[List["Asset"]] = relationship(back_populates="room")
 
 
-class AssetType(Base):
+class AssetType(db.Model):  # noqa: F811
     __tablename__ = "asset_type"
 
     id: Mapped[UUID] = mapped_column(
@@ -121,7 +115,7 @@ class AssetType(Base):
     specs: Mapped[List["Spec"]] = relationship(back_populates="asset_type")
 
 
-class Mission(Base):
+class Mission(db.Model):  # noqa: F811
     __tablename__ = "mission"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
@@ -141,7 +135,7 @@ class Mission(Base):
     logs: Mapped[List["LogMission"]] = relationship(back_populates="mission")
 
 
-class Asset(Base):
+class Asset(db.Model):  # noqa: F811
     __tablename__ = "asset"
     __table_args__ = {"comment": "in mission, on repair, available..."}
 
@@ -192,7 +186,7 @@ class Asset(Base):
     logs: Mapped[List["Log"]] = relationship(back_populates="asset")
 
 
-class Spec(Base):
+class Spec(db.Model):  # noqa: F811
     __tablename__ = "spec"
 
     id: Mapped[UUID] = mapped_column(
@@ -214,7 +208,7 @@ class Spec(Base):
     logs: Mapped[List["Log"]] = relationship(back_populates="spec")
 
 
-class Value(Base):
+class Value(db.Model):  # noqa: F811
     __tablename__ = "value"
 
     id: Mapped[UUID] = mapped_column(
@@ -241,7 +235,7 @@ class Value(Base):
     logs: Mapped[List["Log"]] = relationship(back_populates="value")
 
 
-class LogAdmin(Base):
+class LogAdmin(db.Model):  # noqa: F811
     __tablename__ = "log_admin"
     __table_args__ = {
         "comment": "separated admin logs for added security, when user (user_id) are edited/added... or when app settings are changed"
@@ -265,7 +259,7 @@ class LogAdmin(Base):
     )
 
 
-class Log(Base):
+class Log(db.Model):  # noqa: F811
     __tablename__ = "log"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
@@ -294,7 +288,7 @@ class Log(Base):
     value: Mapped[Optional["Value"]] = relationship(back_populates="logs")
 
 
-class LogMission(Base):
+class LogMission(db.Model):  # noqa: F811
     __tablename__ = "log_mission"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)

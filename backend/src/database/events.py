@@ -1,12 +1,18 @@
 from datetime import datetime
 
 from sqlalchemy import event, inspect
-from src.database.model import (
-    db, User, Mission, Asset, Spec, Value,
-    LogAdmin, Log, LogMission,
-)
 from uuid_extensions import uuid7
 
+from src.database.model import (
+    Asset,
+    Log,
+    LogAdmin,
+    LogMission,
+    Mission,
+    Spec,
+    User,
+    Value,
+)
 
 # ============================================================================
 # AUDIT EVENT LISTENERS

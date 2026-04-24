@@ -1,9 +1,10 @@
 import re
 from uuid import UUID
+
 import jwt
 from argon2.exceptions import VerifyMismatchError
 
-from src.database.model import db, User, ph, AssetType
+from src.database.model import AssetType, User, db, ph
 
 
 def get_user_by_username(username):
