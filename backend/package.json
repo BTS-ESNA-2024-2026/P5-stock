@@ -1,6 +1,7 @@
 {
   "name": "backend",
   "private": true,
+  "packageManager": "pnpm@10.24.0",
   "scripts": {
     "install": "uv sync --extra dev",
     "install:prod": "uv sync",

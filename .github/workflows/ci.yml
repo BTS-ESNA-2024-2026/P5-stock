@@ -93,11 +93,15 @@ jobs:
             --junitxml=ctrf/junit.xml \
             -v
 
+      - name: Convert JUnit XML to CTRF JSON
+        if: always()
+        run: npx --yes junit-to-ctrf backend/ctrf/junit.xml -o backend/ctrf/ctrf-report.json
+
       - name: Publish backend test results
         uses: ctrf-io/github-test-reporter@v1
         if: always()
         with:
-          report-path: 'backend/ctrf/junit.xml'
+          report-path: 'backend/ctrf/ctrf-report.json'
           pull-request-report: true
           title: "Backend (pytest)"
           annotate: true
