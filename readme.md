@@ -1,58 +1,98 @@
 # Project P5
 
-## Requirements
-The following applications are required to run the application and all of it's dependencies
-```
-git
-python 3
-docker
-docker-compose
-react
-```
+## Quick Start - Dev Container (Recommended)
 
-## Copy project
+[![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/BTS-ESNA-2024-2026/P5-stock.git)
+[![Open in GitHub Codespaces](https://img.shields.io/static/v1?label=GitHub%20Codespaces&message=Open&color=green&logo=github)](https://codespaces.new/BTS-ESNA-2024-2026/P5-stock)
+
+Or follow these steps:
+
+1. Install [VS Code](https://code.visualstudio.com/) and the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+2. Clone the repository:
+   ```sh
+   git clone https://github.com/BTS-ESNA-2024-2026/P5-stock.git
+   cd P5-stock
+   ```
+3. Open in VS Code and click "Reopen in Container" when prompted
+4. The dev container will automatically install all dependencies and set up the environment
+
+---
+
+## Manual Setup
+
+### Requirements
+- Node.js >= 24.0.0
+- pnpm >= 10.0.0
+- Python >= 3.11
+- uv (Python package manager)
+- Docker & Docker Compose
+
+### Clone the Repository
 ```sh
 git clone https://github.com/BTS-ESNA-2024-2026/P5-stock.git
 cd P5-stock
 ```
-The source code of the application is now downloaded and ready to be launched
 
-## Initialize python and project
-Create a venv and download required python libs
+### Install Dependencies
+This is a monorepo with frontend and backend. Install both using:
 ```sh
-python -m venv venv
-. ./venv/bin/activate
-pip install -r requirements.txt
-#check for any miss installs in the stack
+pnpm i
 ```
 
-## Generate application's private keys
-/!\ DO NOT SHARE **__private.pem__** EVER ONCE CREATED /!\
+This will:
+- Install Node dependencies (frontend + root)
+- Install Python dependencies (backend) via uv
+
+### Generate RSA Keys
+/!\ DO NOT SHARE **private.pem** EVER /!\
 ```sh
-openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:2048
-openssl pkey -in private.pem -pubout -out public.pem
+pnpm genkey
 ```
 
-## Initialize database in docker
-The docker-compose will create the docker image and run init.sql to create and expose the database. Use `sudo` if required
+This generates `private.pem` and `public.pem` in the backend directory.
+
+### Setup Environment Variables
 ```sh
-cd database/mysql-docker
-docker compose --env-file ../../.env up
-docker ps # confirm creation of docker
-cd ../..
+cp .env.example .env
 ```
 
-## Run the application
-The application is now ready to be launched
+### Run the Application
+
+#### Development Mode (Frontend + Backend)
 ```sh
-flask --app src run
-#or
-flask --app src run --debug # includes hot reload, /!\ do not use in production
+pnpm dev
 ```
 
-## log in the application (get token)
-login using /auth/login
+Or run them separately:
+```sh
+# Terminal 1 - Frontend (http://localhost:5173)
+pnpm dev:frontend
+
+# Terminal 2 - Backend (http://localhost:8000)
+pnpm dev:backend
 ```
-defadm
-yaa
+
+#### Production Mode
+```sh
+# Build frontend
+pnpm build:frontend
+
+# Start backend
+pnpm start:backend
 ```
+
+### Docker Setup
+
+Start the database and services:
+```sh
+pnpm docker:dev:up
+```
+
+This uses the Docker Compose configuration at `docker/dev/docker-compose.yml`.
+
+### Login Credentials
+Default test credentials:
+- Username: `defadm`
+- Password: `yaa`
+
+Access the app at http://localhost:5173

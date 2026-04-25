@@ -1,0 +1,45 @@
+# Backend Dockerfile - Flask with Gunicorn
+FROM python:3.13-alpine
+
+LABEL maintainer="P5 Stock Team"
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache \
+    gcc \
+    musl-dev \
+    postgresql-dev \
+    curl \
+    && rm -rf /var/cache/apk/*
+
+# Copy pyproject.toml and uv.lock
+COPY backend/pyproject.toml backend/uv.lock ./
+
+# Install uv
+RUN pip install --no-cache-dir uv
+
+# Install dependencies using uv
+RUN uv pip install --system -r requirements.txt 2>/dev/null || uv sync --no-dev
+
+# Create non-root user
+RUN addgroup -g 1000 appuser && \
+    adduser -D -u 1000 -G appuser appuser
+
+# Copy application code
+COPY backend/src ./src/
+
+# Change ownership
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+# Run with Gunicorn
+CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "sync", "--access-logfile", "-", "--error-logfile", "-", "src:app"]

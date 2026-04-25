@@ -1,0 +1,190 @@
+name: CI — Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - new-front
+
+# Needed by ctrf-io/github-test-reporter to post PR comments
+permissions:
+  contents: read       # required by actions/checkout
+  pull-requests: write # required to post PR comments
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # --------------------------------------------------------------------------
+  # Lint — ESLint (frontend)
+  # --------------------------------------------------------------------------
+  lint:
+    name: Lint (ESLint + Ruff)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      # ── Frontend: ESLint ──────────────────────────────────────────────────
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Run ESLint
+        working-directory: frontend
+        run: pnpm lint || true
+
+      # ── Backend: Ruff ─────────────────────────────────────────────────────
+
+      - name: Install backend dependencies (including dev extras)
+        working-directory: backend
+        run: uv sync --extra dev
+
+      - name: Run Ruff with annotations
+        working-directory: backend
+        run: pnpm lint || true
+
+  # --------------------------------------------------------------------------
+  # Backend — pytest + coverage + CTRF report + GitHub annotations
+  # --------------------------------------------------------------------------
+  backend-tests:
+    name: Backend (pytest)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: p5stock_test
+        ports:
+          - 5432:5432
+        options: >
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Install Python dependencies (including dev extras)
+        working-directory: backend
+        run: uv sync --extra dev
+
+      - name: Run pytest
+        # pytest-github-actions-annotate-failures automatically emits
+        # ::error:: annotations for every failing test.
+        # --junitxml writes ctrf/junit.xml consumed by github-test-reporter.
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://test:test@localhost:5432/p5stock_test
+          FLASK_SECRET_KEY: ci-secret-key-not-for-production
+          FRONTEND_URL: http://localhost:5173
+        run: |
+          uv run pytest tests/ \
+            --cov=src \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            --junitxml=ctrf/junit.xml \
+            -v
+
+      - name: Convert JUnit XML to CTRF JSON
+        if: always()
+        run: npx --yes junit-to-ctrf backend/ctrf/junit.xml -o backend/ctrf/ctrf-report.json
+
+      - name: Publish backend test results
+        uses: ctrf-io/github-test-reporter@v1
+        if: always()
+        with:
+          report-path: 'backend/ctrf/ctrf-report.json'
+          pull-request-report: true
+          title: "Backend (pytest)"
+          annotate: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload backend coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: backend/coverage.xml
+
+  # --------------------------------------------------------------------------
+  # Frontend — vitest + coverage + CTRF report + GitHub annotations
+  # --------------------------------------------------------------------------
+  frontend-tests:
+    name: Frontend (vitest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install
+
+      - name: Run vitest
+        # CI=true (set automatically by GitHub Actions) enables the
+        # 'github-actions' reporter (::error:: annotations) and
+        # 'vitest-ctrf-reporter' (ctrf/ctrf-report.json) in vitest.config.ts.
+        working-directory: frontend
+        run: pnpm test:ci
+
+      - name: Publish frontend test results
+        uses: ctrf-io/github-test-reporter@v1
+        if: always()
+        with:
+          report-path: 'frontend/vitest-ctrf/report.json'
+          pull-request-report: true
+          title: "Frontend (vitest)"
+          annotate: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload frontend coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: frontend/coverage/
+

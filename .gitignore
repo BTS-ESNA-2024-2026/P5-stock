@@ -7,6 +7,8 @@ __pycache__/
 env/
 venv/
 ENV/
+.venv/
+*.venv
 build/
 develop-eggs/
 dist/
@@ -28,10 +30,25 @@ test.py
 instance/
 .webassets-cache
 
+# Node/pnpm
+node_modules/
+.pnpm-store/
+pnpm-debug.log
+npm-debug.log
+yarn-error.log
+.turbo/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
 # Environment variables
 .env
 .env.local
 .env.production
+.env.*.local
+.env.d.ts
 
 # Logs
 logs/
@@ -48,7 +65,7 @@ secrets/
 *.sqlite
 *.sqlite3
 
-# IDE
+# IDE & Editors
 .vscode/
 .idea/
 *.swp
@@ -56,6 +73,11 @@ secrets/
 *~
 .DS_Store
 .claude
+*.iml
+
+# OS Files
+.DS_Store
+Thumbs.db
 
 # Uploads
 uploads/
@@ -66,6 +88,8 @@ exports/
 .coverage
 htmlcov/
 .tox/
+coverage/
+.nyc_output/
 
 # Documentation
 docs/_build/
@@ -77,9 +101,6 @@ docs/_build/
 # Temporary files
 tmp/
 temp/
-
-.venv
-.idea
 
 private.pem
 public.pem
