@@ -37,7 +37,7 @@
     "jsdom": "^26.1.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",
-    "vite": "^8.0.0",
+    "vite": "^8.0.10",
     "vitest": "^3.2.0",
     "vitest-ctrf-json-reporter": "^0.0.3"
   }
