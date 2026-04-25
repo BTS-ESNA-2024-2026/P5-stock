@@ -27,7 +27,7 @@ dependencies = [
     "SQLAlchemy>=2.0.45",
     "typing_extensions>=4.15.0",
     "uuid7",
-    "Werkzeug==3.1.4",
+    "Werkzeug==3.1.8",
     "pyotp>=2.9.0",
 ]
 
