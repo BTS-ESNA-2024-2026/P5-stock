@@ -36,3 +36,7 @@ export function updateUser(id: string, data: UserUpdatePayload): Promise<{ messa
 export function deleteUser(id: string): Promise<{ message: string }> {
   return apiFetch(`/user/${id}`, { method: 'DELETE' })
 }
+
+export function clearUserMfa(id: string): Promise<{ message: string }> {
+  return apiFetch(`/user/${id}/mfa`, { method: 'DELETE' })
+}

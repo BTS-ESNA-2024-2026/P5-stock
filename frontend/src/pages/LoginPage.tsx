@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [otpCode, setOtpCode] = useState('')
+  const [otpRequired, setOtpRequired] = useState(false)
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -29,7 +30,13 @@ export default function LoginPage() {
       await login(username, password, otpCode || undefined)
       navigate('/dashboard')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Connexion echouee')
+      const message = err instanceof Error ? err.message : 'Connexion echouee'
+      // Backend signals "OTP code required" / "Invalid OTP code" after the
+      // password is already validated — switch the UI to the second step.
+      if (/otp/i.test(message)) {
+        setOtpRequired(true)
+      }
+      setError(message)
     } finally {
       setIsLoading(false)
     }
@@ -86,20 +93,24 @@ export default function LoginPage() {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="otp_code" className="form-label">Code OTP <span className="subtitle">(si activé)</span></label>
-              <input
-                type="text"
-                id="otp_code"
-                className="form-input"
-                value={otpCode}
-                onChange={(event) => setOtpCode(event.target.value)}
-                placeholder="6 chiffres"
-                autoComplete="one-time-code"
-                inputMode="numeric"
-                maxLength={6}
-              />
-            </div>
+            {otpRequired && (
+              <div className="form-group">
+                <label htmlFor="otp_code" className="form-label">Code OTP</label>
+                <input
+                  type="text"
+                  id="otp_code"
+                  className="form-input"
+                  value={otpCode}
+                  onChange={(event) => setOtpCode(event.target.value)}
+                  placeholder="6 chiffres"
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  maxLength={6}
+                  required
+                  autoFocus
+                />
+              </div>
+            )}
 
             <button type="submit" className="btn btn-primary full-width" disabled={isLoading}>
               {isLoading ? 'Connexion...' : 'Se connecter'}

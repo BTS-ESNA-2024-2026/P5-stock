@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import {
   fetchUsers, fetchRoles,
-  createUser, updateUser, deleteUser,
+  createUser, updateUser, deleteUser, clearUserMfa,
   type UserCreatePayload, type UserUpdatePayload,
 } from '../api/admin'
 import { useAuth } from '../context/AuthContext'
@@ -143,6 +143,16 @@ export default function AdminPage() {
     }
   }
 
+  const handleClearMfa = async (u: User) => {
+    if (!confirm(`Reinitialiser le 2FA de "${u.username}" ? L'utilisateur devra le reconfigurer.`)) return
+    try {
+      await clearUserMfa(u.id)
+      await loadData()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur')
+    }
+  }
+
   return (
     <AppLayout>
       <section className="page-hero">
@@ -202,15 +212,16 @@ export default function AdminPage() {
               <th>Nom</th>
               <th>Role</th>
               <th>Status</th>
+              <th>2FA</th>
               <th>Cree le</th>
               {isAdmin && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={isAdmin ? 6 : 5} className="text-center">Chargement...</td></tr>
+              <tr><td colSpan={isAdmin ? 7 : 6} className="text-center">Chargement...</td></tr>
             ) : visibleUsers.length === 0 ? (
-              <tr><td colSpan={isAdmin ? 6 : 5} className="text-center">Aucun utilisateur correspondant.</td></tr>
+              <tr><td colSpan={isAdmin ? 7 : 6} className="text-center">Aucun utilisateur correspondant.</td></tr>
             ) : (
               visibleUsers.map((u) => (
                 <tr key={u.id}>
@@ -220,6 +231,11 @@ export default function AdminPage() {
                   <td>
                     <span className={`badge ${u.active ? 'badge-success' : 'badge-danger'}`}>
                       {u.active ? 'Actif' : 'Inactif'}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${u.MFA ? 'badge-success' : 'badge-warning'}`}>
+                      {u.MFA ? 'Activee' : 'Desactivee'}
                     </span>
                   </td>
                   <td>{formatDate(u.DA)}</td>
@@ -233,6 +249,15 @@ export default function AdminPage() {
                       >
                         {u.active ? 'Desactiver' : 'Activer'}
                       </button>
+                      {u.MFA && (
+                        <button
+                          className="btn btn-sm btn-warning"
+                          onClick={() => handleClearMfa(u)}
+                          title="Reinitialiser le 2FA"
+                        >
+                          Reset 2FA
+                        </button>
+                      )}
                       <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id, u.username)}>Supprimer</button>
                     </td>
                   )}

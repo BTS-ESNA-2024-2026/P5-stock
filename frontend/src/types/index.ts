@@ -96,6 +96,7 @@ export interface User {
   DA: string
   DE: string
   role_name?: string
+  MFA?: boolean
 }
 
 export interface Role {
@@ -119,6 +120,7 @@ export interface CurrentUser {
   role: string
   perms?: UserPerms
   active: boolean
+  MFA?: boolean
 }
 
 export type LogKind = 'asset' | 'mission' | 'admin'

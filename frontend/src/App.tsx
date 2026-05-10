@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage'
 import LoginPage from './pages/LoginPage'
 import LogsPage from './pages/LogsPage'
 import MissionsPage from './pages/MissionsPage'
+import ProfilePage from './pages/ProfilePage'
 import ReportsPage from './pages/ReportsPage'
 
 type Role = 'viewer' | 'user' | 'secure_user' | 'technician' | 'admin'
@@ -48,6 +49,7 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/assets" element={<ProtectedRoute minRole="user"><AssetsPage /></ProtectedRoute>} />
       <Route path="/asset-types" element={<ProtectedRoute minRole="technician"><AssetTypesPage /></ProtectedRoute>} />
       <Route path="/bases" element={<ProtectedRoute minRole="technician"><BasesPage /></ProtectedRoute>} />

@@ -108,6 +108,7 @@ def get_me():
         'role': user.role.name if user.role else None,
         'perms': (user.role.perms if user.role and user.role.perms else {}),
         'active': user.active,
+        'MFA': bool(user.MFA),
     }), 200
 
 
@@ -120,17 +121,50 @@ def post_logout():
 
 @auth_blueprint.post("/otp/setup")
 def post_otp_setup():
+    """Generate a candidate TOTP secret. The secret is NOT persisted until the
+    caller proves possession of the seed by submitting a valid 6-digit code to
+    /otp/verify. This prevents a user from being locked out if they never
+    finish enrolling their authenticator app."""
     user = jwt_decode(request)
     if not user:
         return jsonify({'error': 'Not authenticated'}), 401
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(name=user.username, issuer_name="SGLM")
+    return jsonify({
+        'secret': secret,
+        'uri': uri,
+        'algorithm': 'SHA1',
+        'digits': 6,
+        'period': 30,
+        'type': 'TOTP',
+        'issuer': 'SGLM',
+    }), 200
+
+
+@auth_blueprint.post("/otp/verify")
+def post_otp_verify():
+    """Confirm a candidate secret by validating a 6-digit code against it,
+    then persist it on the user. Body: {secret, otp_code}."""
+    user = jwt_decode(request)
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    data = request.json or {}
+    secret = data.get('secret')
+    otp_code = data.get('otp_code')
+    if not secret or not otp_code:
+        return jsonify({'message': 'secret and otp_code are required'}), 400
+    try:
+        totp = pyotp.TOTP(secret)
+    except Exception:
+        return jsonify({'message': 'Invalid secret format'}), 400
+    if not totp.verify(otp_code, valid_window=1):
+        return jsonify({'message': 'Invalid OTP code'}), 401
     user.MFA = secret
     user.DE = datetime.now(UTC)
     db.session.commit()
-    logger.info(f"OTP setup for user {user.id}")
-    return jsonify({'secret': secret, 'uri': uri}), 200
+    logger.info(f"OTP enabled for user {user.id}")
+    return jsonify({'message': 'OTP enabled'}), 200
 
 
 @auth_blueprint.delete("/otp/setup")

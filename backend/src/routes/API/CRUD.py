@@ -136,6 +136,7 @@ def list_users():
             'group_id': str(u.group_id),
             'DA': u.DA.isoformat() if u.DA else None,
             'DE': u.DE.isoformat() if u.DE else None,
+            'MFA': bool(u.MFA),
         }
         if u.role:
             item['role_name'] = u.role.name
@@ -778,3 +779,22 @@ def delete_user(ID):
         db.session.rollback()
         return err(500, 'Failed to delete user', e)
     return jsonify({'message': 'User deleted'}), 200
+
+
+@CRUD.delete("/user/<uuid:ID>/mfa")
+@require_admin
+def admin_clear_user_mfa(ID):
+    """Admin override: clear a user's 2FA secret (e.g. lost authenticator)."""
+    u = db.session.query(User).filter(User.id == ID).first()
+    if not u:
+        return nf_err("user", [])
+    if not u.MFA:
+        return jsonify({'message': '2FA already disabled'}), 200
+    u.MFA = None
+    u.DE = datetime.now(UTC)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return err(500, 'Failed to clear MFA', e)
+    return jsonify({'message': '2FA disabled'}), 200

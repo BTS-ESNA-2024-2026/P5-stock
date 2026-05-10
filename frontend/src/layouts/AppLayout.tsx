@@ -62,13 +62,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </nav>
 
         <div className="top-actions">
-          <div className="chip">
+          <NavLink to="/profile" className="chip" title="Profil & 2FA" style={{ textDecoration: 'none' }}>
             <span className="icon-btn user-avatar">{initial}</span>
             <div className="user-meta">
               <span className="user-name">{user?.name ?? user?.username ?? '—'}</span>
               <small className="user-role">{user?.role?.toUpperCase() ?? ''}</small>
             </div>
-          </div>
+          </NavLink>
           <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
             Deconnexion
           </button>
