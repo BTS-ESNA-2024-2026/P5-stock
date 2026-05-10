@@ -53,6 +53,10 @@ export function fetchAssetValues(assetId: string): Promise<Value[]> {
   return apiFetch<Value[]>(`/asset/${assetId}/values`)
 }
 
+export function fetchAllValues(): Promise<Value[]> {
+  return apiFetch<Value[]>('/values')
+}
+
 export function createValue(data: { asset_id: string; spec_id: string; value: string }): Promise<{ message: string }> {
   return apiFetch('/value', { method: 'POST', body: JSON.stringify(data) })
 }
@@ -67,6 +71,18 @@ export function deleteValue(id: string): Promise<{ message: string }> {
 
 export function fetchRooms(): Promise<Room[]> {
   return apiFetch<Room[]>('/rooms')
+}
+
+export function createRoom(data: { base_id: string; room: string }): Promise<{ message: string }> {
+  return apiFetch('/room', { method: 'POST', body: JSON.stringify(data) })
+}
+
+export function updateRoom(id: string, data: { room: string }): Promise<{ message: string }> {
+  return apiFetch(`/room/${id}`, { method: 'PUT', body: JSON.stringify(data) })
+}
+
+export function deleteRoom(id: string): Promise<{ message: string }> {
+  return apiFetch(`/room/${id}`, { method: 'DELETE' })
 }
 
 export function fetchBases(): Promise<Base[]> {

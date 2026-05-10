@@ -1,30 +1,58 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import AppLayout from '../layouts/AppLayout'
 import { fetchAssets } from '../api/assets'
 import { fetchMissions } from '../api/missions'
 import { fetchLogs } from '../api/dashboard'
-import type { Asset, Mission, LogEntry } from '../types'
+import { useAuth } from '../context/AuthContext'
+import { formatDateTime, formatTime } from '../utils/dates'
+import type { Asset, Mission, LogEntry, LogKind } from '../types'
+
+const KIND_BADGE: Record<LogKind, string> = {
+  asset: 'badge-success',
+  mission: 'badge-info',
+  admin: 'badge-warning',
+}
+
+const KIND_LABEL: Record<LogKind, string> = {
+  asset: 'Asset',
+  mission: 'Mission',
+  admin: 'Utilisateur',
+}
+
+const KIND_ROUTE: Record<LogKind, string> = {
+  asset: '/assets',
+  mission: '/missions',
+  admin: '/adminpanel',
+}
 
 export default function DashboardPage() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const [lastRefresh, setLastRefresh] = useState(new Date())
   const [assets, setAssets] = useState<Asset[]>([])
   const [missions, setMissions] = useState<Mission[]>([])
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const loadData = useCallback(async () => {
     setLoading(true)
-    try {
-      const [a, m, l] = await Promise.all([fetchAssets(), fetchMissions(), fetchLogs()])
-      setAssets(a)
-      setMissions(m)
-      setLogs(l)
-      setLastRefresh(new Date())
-    } catch {
-      // silently fail — data will appear empty
-    } finally {
-      setLoading(false)
+    setError('')
+    // Run independently so a partial failure (e.g. user has no admin_panel
+    // perm so /api/missions returns) doesn't blank out the rest of the page.
+    const results = await Promise.allSettled([fetchAssets(), fetchMissions(), fetchLogs()])
+    const [a, m, l] = results
+    if (a.status === 'fulfilled') setAssets(a.value)
+    if (m.status === 'fulfilled') setMissions(m.value)
+    if (l.status === 'fulfilled') setLogs(l.value)
+    const failed = results.filter((r) => r.status === 'rejected')
+    if (failed.length > 0) {
+      const reason = (failed[0] as PromiseRejectedResult).reason
+      setError(reason instanceof Error ? reason.message : 'Erreur de chargement')
     }
+    setLastRefresh(new Date())
+    setLoading(false)
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
@@ -43,6 +71,14 @@ export default function DashboardPage() {
     { title: 'En transit', value: String(transitCount), meta: 'Mouvements', variant: 'danger' },
   ]
 
+  // Roles that may follow a log row to its source page. Lower roles see the
+  // activity feed but the corresponding pages are gated.
+  const canOpen: Record<LogKind, boolean> = {
+    asset: ['user', 'secure_user', 'technician', 'admin'].includes(user?.role ?? ''),
+    mission: ['technician', 'admin'].includes(user?.role ?? ''),
+    admin: user?.role === 'admin',
+  }
+
   return (
     <AppLayout>
       <section className="page-hero">
@@ -52,19 +88,18 @@ export default function DashboardPage() {
           <div className="subtitle">Synthese en temps reel des missions et assets.</div>
         </div>
         <div className="controls-row">
-          <button className="icon-btn" onClick={loadData} title="Actualiser" disabled={loading}>
-            &#8635;
-          </button>
-          <button className="btn btn-primary btn-sm" onClick={loadData} disabled={loading}>
-            {loading ? 'Chargement...' : 'Actualiser'}
+          <button className="btn btn-secondary btn-sm" onClick={loadData} disabled={loading}>
+            {loading ? 'Chargement...' : '↻ Actualiser'}
           </button>
         </div>
       </section>
 
+      {error ? <div className="alert alert-danger">{error}</div> : null}
+
       <section className="panel">
         <div className="panel-header">
           <div className="panel-title">Indicateurs cle</div>
-          <span className="chip">MAJ: {lastRefresh.toLocaleTimeString('fr-FR')}</span>
+          <span className="chip">MAJ: {formatTime(lastRefresh)}</span>
         </div>
         <div className="stats-grid">
           {stats.map((stat) => (
@@ -86,27 +121,39 @@ export default function DashboardPage() {
           <thead>
             <tr>
               <th>Date</th>
+              <th>Source</th>
               <th>Action</th>
-              <th>Asset</th>
+              <th>Cible</th>
               <th>Description</th>
             </tr>
           </thead>
           <tbody>
             {logs.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center">
-                  {loading ? 'Chargement...' : 'Aucune activite recente.'}
+                <td colSpan={5} className="text-center">
+                  {loading ? 'Chargement...' : 'Aucune activite enregistree pour le moment.'}
                 </td>
               </tr>
             ) : (
-              logs.slice(0, 20).map((log) => (
-                <tr key={log.id}>
-                  <td>{new Date(log.D).toLocaleString('fr-FR')}</td>
-                  <td><span className="badge badge-info">{log.action}</span></td>
-                  <td>{log.asset_name ?? '—'}</td>
-                  <td>{log.description ?? '—'}</td>
-                </tr>
-              ))
+              logs.slice(0, 20).map((log) => {
+                const kind = (log.log_type ?? 'asset') as LogKind
+                const target = log.asset_name ?? log.entity_name ?? '—'
+                const clickable = canOpen[kind]
+                return (
+                  <tr
+                    key={`${kind}-${log.id}`}
+                    onClick={clickable ? () => navigate(KIND_ROUTE[kind]) : undefined}
+                    style={clickable ? { cursor: 'pointer' } : undefined}
+                    title={clickable ? `Ouvrir ${KIND_LABEL[kind]}s` : undefined}
+                  >
+                    <td>{formatDateTime(log.D)}</td>
+                    <td><span className={`badge ${KIND_BADGE[kind]}`}>{KIND_LABEL[kind]}</span></td>
+                    <td><span className="badge badge-info">{log.action}</span></td>
+                    <td>{target}</td>
+                    <td>{log.description ?? '—'}</td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

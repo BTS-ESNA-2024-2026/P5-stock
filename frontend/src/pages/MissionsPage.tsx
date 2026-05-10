@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import AppLayout from '../layouts/AppLayout'
 import { fetchMissions, createMission, updateMission, deleteMission } from '../api/missions'
+import { combineDateTime, formatDate, toDateInputValue, toTimeInputValue } from '../utils/dates'
 import type { Mission } from '../types'
 
 const MISSION_STATUS_OPTIONS = ['planned', 'active', 'finished', 'cancelled']
@@ -33,8 +34,10 @@ export default function MissionsPage() {
     status: 'planned',
     theatre: '',
     description: '',
-    date_start: '',
-    date_end: '',
+    date_start_date: '',
+    date_start_time: '',
+    date_end_date: '',
+    date_end_time: '',
   })
 
   const loadData = useCallback(async () => {
@@ -62,7 +65,11 @@ export default function MissionsPage() {
 
   const openCreateModal = () => {
     setEditingId(null)
-    setForm({ title: '', status: 'planned', theatre: '', description: '', date_start: '', date_end: '' })
+    setForm({
+      title: '', status: 'planned', theatre: '', description: '',
+      date_start_date: '', date_start_time: '',
+      date_end_date: '', date_end_time: '',
+    })
     setError('')
     setShowModal(true)
   }
@@ -74,8 +81,10 @@ export default function MissionsPage() {
       status: m.status,
       theatre: m.theatre,
       description: m.description ?? '',
-      date_start: m.date_start?.slice(0, 16) ?? '',
-      date_end: m.date_end?.slice(0, 16) ?? '',
+      date_start_date: toDateInputValue(m.date_start),
+      date_start_time: toTimeInputValue(m.date_start),
+      date_end_date: toDateInputValue(m.date_end),
+      date_end_time: toTimeInputValue(m.date_end),
     })
     setError('')
     setShowModal(true)
@@ -92,8 +101,10 @@ export default function MissionsPage() {
       theatre: form.theatre,
     }
     if (form.description) payload.description = form.description
-    if (form.date_start) payload.date_start = form.date_start
-    if (form.date_end) payload.date_end = form.date_end
+    const start = combineDateTime(form.date_start_date, form.date_start_time)
+    const end = combineDateTime(form.date_end_date, form.date_end_time)
+    if (start) payload.date_start = start
+    if (end) payload.date_end = end
 
     try {
       if (editingId) {
@@ -130,7 +141,7 @@ export default function MissionsPage() {
         </div>
         <div className="controls-row">
           <button className="btn btn-secondary btn-sm" onClick={loadData} disabled={loading}>
-            {loading ? 'Chargement...' : '&#8635; Actualiser'}
+            {loading ? 'Chargement...' : '↻ Actualiser'}
           </button>
           <button className="btn btn-primary btn-sm" onClick={openCreateModal}>+ Nouvelle mission</button>
         </div>
@@ -194,8 +205,8 @@ export default function MissionsPage() {
                       {MISSION_STATUS_LABELS[m.status] ?? m.status}
                     </span>
                   </td>
-                  <td>{m.date_start ? new Date(m.date_start).toLocaleDateString('fr-FR') : '—'}</td>
-                  <td>{m.date_end ? new Date(m.date_end).toLocaleDateString('fr-FR') : '—'}</td>
+                  <td>{formatDate(m.date_start)}</td>
+                  <td>{formatDate(m.date_end)}</td>
                   <td>{m.asset_count ?? 0}</td>
                   <td className="flex gap-1">
                     <button className="btn btn-sm btn-secondary" onClick={() => openEditModal(m)}>Edit</button>
@@ -265,23 +276,51 @@ export default function MissionsPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Date de debut</label>
-              <input
-                type="datetime-local"
-                className="form-input"
-                value={form.date_start}
-                onChange={(e) => setForm((p) => ({ ...p, date_start: e.target.value }))}
-              />
+              <label className="form-label">Debut (date / heure)</label>
+              <div className="flex gap-1">
+                <input
+                  type="date"
+                  lang="fr-FR"
+                  className="form-input"
+                  value={form.date_start_date}
+                  onChange={(e) => setForm((p) => ({ ...p, date_start_date: e.target.value }))}
+                  style={{ flex: 2 }}
+                />
+                <input
+                  type="time"
+                  lang="fr-FR"
+                  step={60}
+                  className="form-input"
+                  value={form.date_start_time}
+                  onChange={(e) => setForm((p) => ({ ...p, date_start_time: e.target.value }))}
+                  disabled={!form.date_start_date}
+                  style={{ flex: 1 }}
+                />
+              </div>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Date de fin</label>
-              <input
-                type="datetime-local"
-                className="form-input"
-                value={form.date_end}
-                onChange={(e) => setForm((p) => ({ ...p, date_end: e.target.value }))}
-              />
+              <label className="form-label">Fin (date / heure)</label>
+              <div className="flex gap-1">
+                <input
+                  type="date"
+                  lang="fr-FR"
+                  className="form-input"
+                  value={form.date_end_date}
+                  onChange={(e) => setForm((p) => ({ ...p, date_end_date: e.target.value }))}
+                  style={{ flex: 2 }}
+                />
+                <input
+                  type="time"
+                  lang="fr-FR"
+                  step={60}
+                  className="form-input"
+                  value={form.date_end_time}
+                  onChange={(e) => setForm((p) => ({ ...p, date_end_time: e.target.value }))}
+                  disabled={!form.date_end_date}
+                  style={{ flex: 1 }}
+                />
+              </div>
             </div>
 
             <div className="flex gap-2">

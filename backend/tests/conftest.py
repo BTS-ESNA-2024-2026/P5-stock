@@ -199,6 +199,7 @@ def seed_test_db(app):
 def make_token(user_id: str, private_key, expired: bool = False) -> str:
     """Create a signed RS256 JWT for the given user_id."""
     import jwt as pyjwt
+    from src.services.crypto import JWT_AUDIENCE, JWT_ISSUER
 
     private_pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
@@ -210,6 +211,8 @@ def make_token(user_id: str, private_key, expired: bool = False) -> str:
         "user_id": user_id,
         "exp": datetime.now(UTC) + delta,
         "iat": datetime.now(UTC),
+        "iss": JWT_ISSUER,
+        "aud": JWT_AUDIENCE,
         "type": "access",
     }
     return pyjwt.encode(payload, private_pem, algorithm="RS256")

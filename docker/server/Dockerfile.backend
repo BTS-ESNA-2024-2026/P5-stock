@@ -41,5 +41,18 @@ EXPOSE 8000
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
   CMD curl -f http://localhost:8000/health || exit 1
 
+# JWT keys must be provided at runtime — do NOT bake them into the image.
+# Mount the pair read-only and point the app at the absolute paths via
+# JWT_PRIVATE_KEY_PATH / JWT_PUBLIC_KEY_PATH. Example with docker-compose:
+#   secrets:
+#     jwt_private: { file: ./private.pem }
+#     jwt_public:  { file: ./public.pem }
+# then in the backend service:
+#   secrets: [jwt_private, jwt_public]
+#   environment:
+#     JWT_PRIVATE_KEY_PATH: /run/secrets/jwt_private
+#     JWT_PUBLIC_KEY_PATH:  /run/secrets/jwt_public
+# The app loads keys lazily and fails fast with an explicit error if missing.
+
 # Run with Gunicorn
 CMD ["uv", "run", "gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "sync", "--access-logfile", "-", "--error-logfile", "-", "src:app"]

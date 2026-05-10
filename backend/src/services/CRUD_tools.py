@@ -1,12 +1,37 @@
 from datetime import UTC, datetime
 from uuid import UUID
 
-from flask import jsonify
+from flask import has_request_context, jsonify, request
 from loguru import logger
 from sqlalchemy.exc import ProgrammingError
 
 #from traceback import print_exc as trcb
 from src.database.model import db
+
+
+def _actor_tag() -> str:
+    """Return a short identifier for the current request user, or 'anon'."""
+    if not has_request_context():
+        return 'system'
+    actor = getattr(request, 'current_user', None)
+    if actor:
+        return f'{actor.username}({actor.id})'
+    return 'anon'
+
+
+def _obj_tag(obj) -> str:
+    """Return a short identifier of an ORM object for logging."""
+    if obj is None:
+        return ''
+    parts = []
+    if getattr(obj, 'id', None) is not None:
+        parts.append(f'id={obj.id}')
+    for attr in ('username', 'name', 'title', 'type', 'room'):
+        val = getattr(obj, attr, None)
+        if val:
+            parts.append(f'{attr}={val!r}')
+            break
+    return ' '.join(parts) if parts else repr(obj)
 
 
 def _serialize_value(val):
@@ -130,25 +155,29 @@ def nf_err(elem, mode="create", *args): #not found, mode for consistency sake
         'status': 'error'
     }), 404
 
-def success(elem, mode="create", *args):
-    past = {"read" : "red", "create" : "created", "update" : "updated", "delete" : "deleted"}
-    logger.info(f"New {elem} {past[mode]} : {str(*args)}")
-    return jsonify({
-        'message': f'{elem} {past[mode]} succesfully',
-        'status': 'success'
-    }), 201 if mode=="create" else 200
+PAST_TENSE = {"read": "read", "create": "created", "update": "updated", "delete": "deleted"}
 
-def commit(elem, obj, mode="create") :
-    if mode=="create" :
+
+def success(elem, mode="create", obj=None):
+    verb = PAST_TENSE.get(mode, mode)
+    logger.info(f"{elem} {verb} by {_actor_tag()} : {_obj_tag(obj)}")
+    return jsonify({
+        'message': f'{elem} {verb} succesfully',
+        'status': 'success'
+    }), 201 if mode == "create" else 200
+
+
+def commit(elem, obj, mode="create"):
+    if mode == "create":
         db.session.add(obj)
-    elif mode=="delete" :
+    elif mode == "delete":
         db.session.delete(obj)
-    try :
+    try:
         db.session.commit()
     except ProgrammingError as e:
         db.session.rollback()
         return fkc_err(elem, mode, e)
-    except Exception as e :
+    except Exception as e:
         db.session.rollback()
         return ukn_err(elem, mode, e)
-    return success(elem, mode)
+    return success(elem, mode, obj)

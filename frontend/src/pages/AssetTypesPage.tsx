@@ -31,10 +31,11 @@ export default function AssetTypesPage() {
   // Panel specs
   const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null)
 
-  // Modal spec
+  // Modal spec — type_id is required so we can create from the global button
+  // even without a selected type in the side panel.
   const [showSpecModal, setShowSpecModal] = useState(false)
   const [editingSpecId, setEditingSpecId] = useState<string | null>(null)
-  const [specForm, setSpecForm] = useState({ name: '' })
+  const [specForm, setSpecForm] = useState({ name: '', type_id: '' })
 
   const editable = canEdit(user?.role)
 
@@ -109,28 +110,32 @@ export default function AssetTypesPage() {
   // ---- Spec modal ----
   const openCreateSpecModal = () => {
     setEditingSpecId(null)
-    setSpecForm({ name: '' })
+    // Pre-select the side-panel type if one is open, otherwise the first type.
+    setSpecForm({ name: '', type_id: selectedTypeId ?? assetTypes[0]?.id ?? '' })
     setError('')
     setShowSpecModal(true)
   }
 
   const openEditSpecModal = (s: Spec) => {
     setEditingSpecId(s.id)
-    setSpecForm({ name: s.name })
+    setSpecForm({ name: s.name, type_id: s.type_id })
     setError('')
     setShowSpecModal(true)
   }
 
   const handleSaveSpec = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedTypeId) return
+    if (!editingSpecId && !specForm.type_id) {
+      setError('Choisissez un type')
+      return
+    }
     setSaving(true)
     setError('')
     try {
       if (editingSpecId) {
         await updateSpec(editingSpecId, { name: specForm.name })
       } else {
-        await createSpec({ type_id: selectedTypeId, name: specForm.name })
+        await createSpec({ type_id: specForm.type_id, name: specForm.name })
       }
       setShowSpecModal(false)
       await loadData()
@@ -161,7 +166,7 @@ export default function AssetTypesPage() {
         </div>
         <div className="controls-row">
           <button className="btn btn-secondary btn-sm" onClick={loadData} disabled={loading}>
-            {loading ? 'Chargement...' : '&#8635; Actualiser'}
+            {loading ? 'Chargement...' : '↻ Actualiser'}
           </button>
           {editable && (
             <button className="btn btn-primary btn-sm" onClick={openCreateTypeModal}>+ Nouveau type</button>
@@ -273,7 +278,8 @@ export default function AssetTypesPage() {
       </div>
 
       {/* Modal type */}
-      <div className={`modal${showTypeModal ? ' active' : ''}`}>
+      {showTypeModal && (
+      <div className="modal active">
         <div className="modal-content">
           <div className="modal-header">
             <h3>{editingTypeId ? 'Modifier le type' : 'Nouveau type d\'asset'}</h3>
@@ -303,23 +309,40 @@ export default function AssetTypesPage() {
           </form>
         </div>
       </div>
+      )}
 
       {/* Modal spec */}
-      <div className={`modal${showSpecModal ? ' active' : ''}`}>
+      {showSpecModal && (
+      <div className="modal active">
         <div className="modal-content">
           <div className="modal-header">
-            <h3>{editingSpecId ? 'Modifier la spec' : `Nouvelle spec — ${selectedType?.type ?? ''}`}</h3>
+            <h3>{editingSpecId ? 'Modifier la spec' : 'Nouvelle spec'}</h3>
             <button className="modal-close" onClick={() => setShowSpecModal(false)} aria-label="Fermer">&times;</button>
           </div>
           {error && showSpecModal ? <div className="alert alert-danger">{error}</div> : null}
           <form onSubmit={handleSaveSpec}>
+            <div className="form-group">
+              <label className="form-label">Type d'asset *</label>
+              <select
+                className="form-select"
+                value={specForm.type_id}
+                onChange={(e) => setSpecForm((p) => ({ ...p, type_id: e.target.value }))}
+                disabled={Boolean(editingSpecId)}
+                required
+              >
+                <option value="">Selectionner un type</option>
+                {assetTypes.map((t) => (
+                  <option key={t.id} value={t.id}>{t.type}</option>
+                ))}
+              </select>
+            </div>
             <div className="form-group">
               <label className="form-label">Nom de la spec *</label>
               <input
                 type="text"
                 className="form-input"
                 value={specForm.name}
-                onChange={(e) => setSpecForm({ name: e.target.value })}
+                onChange={(e) => setSpecForm((p) => ({ ...p, name: e.target.value }))}
                 placeholder="ex: Kilometrage, Date d'expiration, Calibre..."
                 required
               />
@@ -335,6 +358,7 @@ export default function AssetTypesPage() {
           </form>
         </div>
       </div>
+      )}
     </AppLayout>
   )
 }

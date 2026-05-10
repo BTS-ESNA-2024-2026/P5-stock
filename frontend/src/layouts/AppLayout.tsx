@@ -6,15 +6,26 @@ type AppLayoutProps = {
   children: ReactNode
 }
 
-const links = [
-  { to: '/dashboard', label: 'Dashboard' },
-  { to: '/assets', label: 'Assets' },
-  { to: '/asset-types', label: 'Types' },
-  { to: '/bases', label: 'Bases' },
-  { to: '/missions', label: 'Missions' },
-  { to: '/users', label: 'Utilisateurs' },
-  { to: '/reports', label: 'Rapports' },
-  { to: '/adminpanel', label: 'Admin' },
+type NavItem = { to: string; label: string; minRole: Role }
+type Role = 'viewer' | 'user' | 'secure_user' | 'technician' | 'admin'
+
+const ROLE_RANK: Record<Role, number> = {
+  viewer: 0,
+  user: 1,
+  secure_user: 2,
+  technician: 3,
+  admin: 4,
+}
+
+const links: NavItem[] = [
+  { to: '/dashboard', label: 'Dashboard', minRole: 'viewer' },
+  { to: '/assets', label: 'Assets', minRole: 'user' },
+  { to: '/asset-types', label: 'Types', minRole: 'technician' },
+  { to: '/bases', label: 'Bases', minRole: 'technician' },
+  { to: '/missions', label: 'Missions', minRole: 'technician' },
+  { to: '/reports', label: 'Rapports', minRole: 'technician' },
+  { to: '/logs', label: 'Logs', minRole: 'technician' },
+  { to: '/adminpanel', label: 'Admin', minRole: 'admin' },
 ]
 
 export default function AppLayout({ children }: AppLayoutProps) {
@@ -27,6 +38,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
   }
 
   const initial = user?.name?.charAt(0).toUpperCase() ?? user?.username?.charAt(0).toUpperCase() ?? '?'
+  const userRank = user?.role && user.role in ROLE_RANK ? ROLE_RANK[user.role as Role] : -1
+  const visibleLinks = links.filter((l) => userRank >= ROLE_RANK[l.minRole])
 
   return (
     <div className="shell">
@@ -37,7 +50,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         </div>
 
         <nav className="nav-links">
-          {links.map((link) => (
+          {visibleLinks.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}

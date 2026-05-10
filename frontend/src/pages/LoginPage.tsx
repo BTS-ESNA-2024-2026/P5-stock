@@ -1,16 +1,20 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { user, loading, login } = useAuth()
+  const location = useLocation()
+  const { user, loading, login, sessionExpired } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [otpCode, setOtpCode] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
+  // ?session=expired is set by the global 401 handler in AuthContext.
+  const expired = sessionExpired || new URLSearchParams(location.search).get('session') === 'expired'
 
   if (!loading && user) {
     return <Navigate to="/dashboard" replace />
@@ -46,6 +50,11 @@ export default function LoginPage() {
             <p className="subtitle">Acces au tableau de bord et a la supervision PSSTOCK.</p>
           </div>
 
+          {expired && !error ? (
+            <div className="alert alert-warning mb-2">
+              Votre session a expire. Veuillez vous reconnecter.
+            </div>
+          ) : null}
           {error ? <div className="alert alert-danger mb-2">{error}</div> : null}
 
           <form onSubmit={onSubmit}>

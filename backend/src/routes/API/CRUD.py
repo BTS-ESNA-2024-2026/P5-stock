@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from functools import wraps
+from uuid import UUID
 
 from flask import Blueprint, jsonify, request
 
@@ -8,6 +9,8 @@ from src.database.model import (
     AssetType,
     Base_,
     Log,
+    LogAdmin,
+    LogMission,
     Mission,
     Role,
     Room,
@@ -15,9 +18,34 @@ from src.database.model import (
     User,
     Value,
     db,
+    ph,
 )
 from src.services.CRUD_tools import _serialize_value, create, delete, err, nf_err, read, update
-from src.services.decorators import require_admin, require_technician, require_viewer
+from src.services.decorators import require_admin, require_technician, require_user, require_viewer
+from src.services.tools import (
+    get_user_by_username,
+    jwt_decode,
+    validate_username,
+)
+
+
+def _has_sensible_access(user) -> bool:
+    """True if the user's role grants the `sensible_access` permission."""
+    if user is None or user is False or not getattr(user, 'role', None):
+        return False
+    perms = user.role.perms or {}
+    return bool(perms.get('sensible_access'))
+
+
+def _coerce_sensible(val):
+    """Normalise the incoming `sensible` flag to a Python bool (or None)."""
+    if val is None:
+        return None
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, str):
+        return val.lower() in ('1', 'true', 'yes', 'on')
+    return bool(val)
 
 CRUD = Blueprint("CRUD", __name__)
 
@@ -35,7 +63,11 @@ def _serialize_obj(obj):
 @CRUD.get("/assets")
 @require_viewer
 def list_assets():
-    assets = db.session.query(Asset).all()
+    user = jwt_decode(request)
+    q = db.session.query(Asset)
+    if not _has_sensible_access(user):
+        q = q.filter((Asset.sensible.is_(None)) | (Asset.sensible.is_(False)))
+    assets = q.all()
     result = []
     for a in assets:
         item = _serialize_obj(a)
@@ -146,17 +178,123 @@ def list_asset_values(ID):
     return jsonify(result), 200
 
 
+@CRUD.get("/values")
+@require_viewer
+def list_all_values():
+    """Bulk listing of values across all assets, used by AssetsPage to render
+    expandable rows and to filter assets by spec/value without an N+1 fetch.
+    Sensible-asset values are filtered out for users without sensible_access."""
+    user = jwt_decode(request)
+    has_sensible = _has_sensible_access(user)
+    q = db.session.query(Value).join(Asset, Value.asset_id == Asset.id)
+    if not has_sensible:
+        q = q.filter((Asset.sensible.is_(None)) | (Asset.sensible.is_(False)))
+    values = q.all()
+    result = []
+    for v in values:
+        item = _serialize_obj(v)
+        if v.spec:
+            item['spec_name'] = v.spec.name
+        result.append(item)
+    return jsonify(result), 200
+
+
+def _serialize_log_entry(entry, kind: str) -> dict:
+    """Uniform shape for the aggregated log feed."""
+    base = {
+        'id': str(entry.id),
+        'D': entry.D.isoformat() if entry.D else None,
+        'action': entry.action,
+        'log_type': kind,
+    }
+    if kind == 'asset':
+        base.update({
+            'description': entry.description,
+            'asset_id': str(entry.asset_id) if entry.asset_id else None,
+            'asset_name': entry.asset.name if entry.asset else None,
+            'spec_id': str(entry.spec_id) if entry.spec_id else None,
+            'value_id': str(entry.value_id) if entry.value_id else None,
+        })
+    elif kind == 'mission':
+        base.update({
+            'description': entry.description,
+            'mission_id': str(entry.mission_id) if entry.mission_id else None,
+            'entity_name': entry.mission.title if entry.mission else None,
+        })
+    elif kind == 'admin':
+        base.update({
+            'description': entry.desc,
+            'user_id': str(entry.user_id) if entry.user_id else None,
+            'entity_name': entry.user.username if entry.user else None,
+        })
+    return base
+
+
 @CRUD.get("/logs")
 @require_viewer
 def list_logs():
-    logs = db.session.query(Log).order_by(Log.D.desc()).limit(50).all()
-    result = []
-    for log_entry in logs:
-        item = _serialize_obj(log_entry)
-        if log_entry.asset:
-            item['asset_name'] = log_entry.asset.name
-        result.append(item)
-    return jsonify(result), 200
+    """Aggregate the three audit tables (asset/value/spec, mission, user) into a
+    single recent-activity feed. The dashboard shows the top 50 most recent entries."""
+    user = jwt_decode(request)
+    has_sensible = _has_sensible_access(user)
+
+    asset_logs = db.session.query(Log).order_by(Log.D.desc()).limit(50).all()
+    mission_logs = db.session.query(LogMission).order_by(LogMission.D.desc()).limit(50).all()
+    admin_logs = (
+        db.session.query(LogAdmin).order_by(LogAdmin.D.desc()).limit(50).all()
+        if user and user.role and (user.role.perms or {}).get('admin_panel')
+        else []
+    )
+
+    items: list[dict] = []
+    for entry in asset_logs:
+        # Hide asset logs that reference a sensible asset for users without access.
+        if not has_sensible and entry.asset and entry.asset.sensible:
+            continue
+        items.append(_serialize_log_entry(entry, 'asset'))
+    for entry in mission_logs:
+        items.append(_serialize_log_entry(entry, 'mission'))
+    for entry in admin_logs:
+        items.append(_serialize_log_entry(entry, 'admin'))
+
+    items.sort(key=lambda x: x['D'] or '', reverse=True)
+    return jsonify(items[:50]), 200
+
+
+@CRUD.get("/admin/logs")
+@require_technician
+def list_admin_logs():
+    """Read-only access to the full audit feed for admins/technicians. Logs are
+    immutable (event listeners forbid update/delete on the log tables).
+    Query params: ?type=asset|mission|admin (optional), ?limit=200 (max 1000)."""
+    user = jwt_decode(request)
+    has_sensible = _has_sensible_access(user)
+    can_admin = bool(user and user.role and (user.role.perms or {}).get('admin_panel'))
+
+    try:
+        limit = max(1, min(int(request.args.get('limit', 200)), 1000))
+    except ValueError:
+        limit = 200
+    type_filter = request.args.get('type', '')
+
+    items: list[dict] = []
+
+    if type_filter in ('', 'asset'):
+        for entry in db.session.query(Log).order_by(Log.D.desc()).limit(limit).all():
+            if not has_sensible and entry.asset and entry.asset.sensible:
+                continue
+            items.append(_serialize_log_entry(entry, 'asset'))
+
+    if type_filter in ('', 'mission'):
+        for entry in db.session.query(LogMission).order_by(LogMission.D.desc()).limit(limit).all():
+            items.append(_serialize_log_entry(entry, 'mission'))
+
+    if type_filter in ('', 'admin') and can_admin:
+        for entry in db.session.query(LogAdmin).order_by(LogAdmin.D.desc()).limit(limit).all():
+            items.append(_serialize_log_entry(entry, 'admin'))
+
+    items.sort(key=lambda x: x['D'] or '', reverse=True)
+    return jsonify(items[:limit]), 200
 
 class CRUDHandler:
     @staticmethod
@@ -266,34 +404,71 @@ def delete_base(ID):
 
 
 
-# - - - - - - - - ASSET - - - - - - - - --> TO BE DONE need ENUM verification with fetch from DB
-@CRUD.post("/asset")
-@require_technician
-@CRUDHandler.crud_operation(Asset, "asset", "create",
-    #required_fields=["type_asset_id", "name", "status"],
-    required_fields=["type_asset_id","name", "status"],
-    acceptable_fields=["mission_id", "room_id", "number", "quantity", "shelf", "sensible"])
-def insert_asset():
-    pass
+# - - - - - - - - ASSET - - - - - - - -
+# Per spec (UC-3 / UC-3s): `user` may CRUD non-sensible assets; `secure_user`+ may
+# touch sensible assets and toggle the `sensible` flag.
+ASSET_REQUIRED = ['type_asset_id', 'name', 'status']
+ASSET_ACCEPTABLE = ['mission_id', 'room_id', 'number', 'quantity', 'shelf', 'sensible']
+ASSET_UPDATABLE = ['mission_id', 'room_id', 'name', 'number', 'status', 'quantity', 'shelf', 'sensible']
+
 
 @CRUD.get("/asset/<uuid:ID>")
-@require_technician
-@CRUDHandler.crud_operation(Asset, "asset", "get")
+@require_user
 def get_asset(ID):
-    pass
+    asset = db.session.query(Asset).filter(Asset.id == ID).first()
+    if not asset:
+        return nf_err("asset", [])
+    if asset.sensible and not _has_sensible_access(jwt_decode(request)):
+        return err(403, 'Insufficient permission to view a sensible asset')
+    return read(ID, "asset", asset)
+
+
+@CRUD.post("/asset")
+@require_user
+def insert_asset():
+    data = request.json or {}
+    user = jwt_decode(request)
+    sensible = _coerce_sensible(data.get('sensible'))
+    if sensible and not _has_sensible_access(user):
+        return err(403, 'Insufficient permission to create a sensible asset')
+    if sensible is not None:
+        data = {**data, 'sensible': sensible}
+    obj = Asset()
+    t = datetime.now(UTC)
+    obj.DA = t
+    obj.DE = t
+    return create("asset", ASSET_REQUIRED, ASSET_ACCEPTABLE, data, obj)
+
 
 @CRUD.put("/asset/<uuid:ID>")
-@require_technician
-@CRUDHandler.crud_operation(Asset, "asset", "update",
-    updatable_fields=["mission_id", "room_id", "name", "number", "status", "quantity", "shelf", "sensible"])
+@require_user
 def update_asset(ID):
-    pass
+    asset = db.session.query(Asset).filter(Asset.id == ID).first()
+    if not asset:
+        return nf_err("asset", [])
+    user = jwt_decode(request)
+    has_sensible = _has_sensible_access(user)
+    if asset.sensible and not has_sensible:
+        return err(403, 'Insufficient permission to edit a sensible asset')
+    data = request.json or {}
+    if 'sensible' in data:
+        new_sensible = _coerce_sensible(data['sensible'])
+        if not has_sensible and new_sensible != bool(asset.sensible):
+            return err(403, 'Insufficient permission to change the sensible flag')
+        data = {**data, 'sensible': new_sensible}
+    asset.DE = datetime.now(UTC)
+    return update(ID, "asset", ASSET_UPDATABLE, data, asset)
+
 
 @CRUD.delete("/asset/<uuid:ID>")
-@require_technician
-@CRUDHandler.crud_operation(Asset, "asset", "delete")
+@require_user
 def delete_asset(ID):
-    pass
+    asset = db.session.query(Asset).filter(Asset.id == ID).first()
+    if not asset:
+        return nf_err("asset", [])
+    if asset.sensible and not _has_sensible_access(jwt_decode(request)):
+        return err(403, 'Insufficient permission to delete a sensible asset')
+    return delete(ID, "asset", asset)
 
 
 
@@ -355,31 +530,75 @@ def delete_spec(ID):
 
 
 # - - - - - - - - VALUE - - - - - - - -
+# Spec values are part of an asset's editable data, so they follow the same
+# permission rules as the asset itself: any `user` may CRUD a value on a non-
+# sensible asset; sensible assets require `secure_user`+.
+def _value_check_asset_permission(asset_id):
+    """Return None if the caller may mutate values on this asset, otherwise an
+    error response tuple."""
+    asset = db.session.query(Asset).filter(Asset.id == asset_id).first()
+    if not asset:
+        return nf_err("asset", [])
+    if asset.sensible and not _has_sensible_access(jwt_decode(request)):
+        return err(403, 'Insufficient permission to edit values on a sensible asset')
+    return None
+
+
 @CRUD.post("/value")
-@require_technician
-@CRUDHandler.crud_operation(Value, "value", "create",
-    required_fields=["asset_id", "spec_id", "value"])
+@require_user
 def insert_value():
-    pass
+    data = request.json or {}
+    if 'asset_id' not in data:
+        return err(400, 'Missing required fields: [asset_id]')
+    try:
+        asset_id = UUID(data['asset_id']) if isinstance(data['asset_id'], str) else data['asset_id']
+    except (ValueError, TypeError):
+        return err(400, 'Invalid asset_id')
+    deny = _value_check_asset_permission(asset_id)
+    if deny:
+        return deny
+    obj = Value()
+    t = datetime.now(UTC)
+    obj.DA = t
+    obj.DE = t
+    return create("value", ["asset_id", "spec_id", "value"], [], data, obj)
+
 
 @CRUD.get("/value/<uuid:ID>")
-@require_technician
-@CRUDHandler.crud_operation(Value, "value", "get")
+@require_user
 def get_value(ID):
-    pass
+    v = db.session.query(Value).filter(Value.id == ID).first()
+    if not v:
+        return nf_err("value", [])
+    deny = _value_check_asset_permission(v.asset_id)
+    if deny:
+        return deny
+    return read(ID, "value", v)
+
 
 @CRUD.put("/value/<uuid:ID>")
-@require_technician
-@CRUDHandler.crud_operation(Value, "value", "update",
-    updatable_fields=["asset_id", "spec_id", "value"])
+@require_user
 def update_value(ID):
-    pass
+    v = db.session.query(Value).filter(Value.id == ID).first()
+    if not v:
+        return nf_err("value", [])
+    deny = _value_check_asset_permission(v.asset_id)
+    if deny:
+        return deny
+    v.DE = datetime.now(UTC)
+    return update(ID, "value", ["asset_id", "spec_id", "value"], request.json or {}, v)
+
 
 @CRUD.delete("/value/<uuid:ID>")
-@require_technician
-@CRUDHandler.crud_operation(Value, "value", "delete")
+@require_user
 def delete_value(ID):
-    pass
+    v = db.session.query(Value).filter(Value.id == ID).first()
+    if not v:
+        return nf_err("value", [])
+    deny = _value_check_asset_permission(v.asset_id)
+    if deny:
+        return deny
+    return delete(ID, "value", v)
 
 
 
@@ -411,3 +630,151 @@ def update_mission(ID):
 @CRUDHandler.crud_operation(Mission, "mission", "delete")
 def delete_mission(ID):
     pass
+
+
+
+# - - - - - - - - USER - - - - - - - -
+# Users need special handling: password hashing + uniqueness check.
+# The default admin (id 019563a0-0000-7000-8000-000000000010 - 'system') and the
+# bootstrap admin must remain protected from deletion.
+SYSTEM_USER_IDS = {
+    '019563a0-0000-7000-8000-000000000010',  # system user
+}
+
+
+def _serialize_user(u: User) -> dict:
+    item = {
+        'id': str(u.id),
+        'username': u.username,
+        'name': u.name,
+        'active': u.active,
+        'group_id': str(u.group_id),
+        'DA': u.DA.isoformat() if u.DA else None,
+        'DE': u.DE.isoformat() if u.DE else None,
+        'has_mfa': bool(u.MFA),
+    }
+    if u.role:
+        item['role_name'] = u.role.name
+    return item
+
+
+@CRUD.get("/user/<uuid:ID>")
+@require_admin
+def get_user(ID):
+    u = db.session.query(User).filter(User.id == ID).first()
+    if not u:
+        return nf_err("user", [])
+    return jsonify(_serialize_user(u)), 200
+
+
+@CRUD.post("/user")
+@require_admin
+def create_user():
+    data = request.json or {}
+    required = ['username', 'password', 'group_id']
+    missing = [f for f in required if not data.get(f)]
+    if missing:
+        return err(400, f'Missing required fields: {missing}')
+
+    username = data['username'].strip()
+    if not validate_username(username):
+        return err(400, 'Invalid username (alphanumeric, 2-35 chars, not reserved)')
+
+    if get_user_by_username(username):
+        return err(409, 'Username already exists')
+
+    try:
+        group_id = UUID(data['group_id']) if isinstance(data['group_id'], str) else data['group_id']
+    except (ValueError, TypeError):
+        return err(400, 'Invalid group_id')
+
+    if not db.session.query(Role).filter(Role.id == group_id).first():
+        return err(400, 'Role not found')
+
+    try:
+        user = User(
+            username=username,
+            group_id=group_id,
+            name=data.get('name') or None,
+            hash=ph.hash(data['password']),
+            hash_algorithm='argon2',
+            active=bool(data.get('active', True)),
+        )
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return err(500, 'Failed to create user', e)
+    return jsonify({'message': 'User created', 'id': str(user.id)}), 201
+
+
+@CRUD.put("/user/<uuid:ID>")
+@require_admin
+def update_user(ID):
+    u = db.session.query(User).filter(User.id == ID).first()
+    if not u:
+        return nf_err("user", [])
+
+    data = request.json or {}
+    changed = False
+
+    if 'username' in data and data['username']:
+        new_username = data['username'].strip()
+        if new_username != u.username:
+            if not validate_username(new_username):
+                return err(400, 'Invalid username')
+            if get_user_by_username(new_username):
+                return err(409, 'Username already exists')
+            u.username = new_username
+            changed = True
+
+    if 'name' in data:
+        u.name = data['name'] or None
+        changed = True
+
+    if 'group_id' in data and data['group_id']:
+        try:
+            gid = UUID(data['group_id']) if isinstance(data['group_id'], str) else data['group_id']
+        except (ValueError, TypeError):
+            return err(400, 'Invalid group_id')
+        if not db.session.query(Role).filter(Role.id == gid).first():
+            return err(400, 'Role not found')
+        u.group_id = gid
+        changed = True
+
+    if 'active' in data:
+        u.active = bool(data['active'])
+        changed = True
+
+    if data.get('password'):
+        u.hash = ph.hash(data['password'])
+        u.hash_algorithm = 'argon2'
+        changed = True
+
+    if not changed:
+        return err(400, 'No fields to update')
+
+    try:
+        u.DE = datetime.now(UTC)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return err(500, 'Failed to update user', e)
+    return jsonify({'message': 'User updated'}), 200
+
+
+@CRUD.delete("/user/<uuid:ID>")
+@require_admin
+def delete_user(ID):
+    if str(ID) in SYSTEM_USER_IDS:
+        return err(403, 'Cannot delete system user')
+    u = db.session.query(User).filter(User.id == ID).first()
+    if not u:
+        return nf_err("user", [])
+    try:
+        db.session.delete(u)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return err(500, 'Failed to delete user', e)
+    return jsonify({'message': 'User deleted'}), 200

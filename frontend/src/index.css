@@ -149,6 +149,8 @@ select {
   background: rgba(255, 255, 255, 0.02);
   color: var(--muted);
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .icon-btn {
@@ -267,6 +269,12 @@ select {
 
 .search-compact {
   width: min(360px, 100%);
+  flex: 1 1 240px;
+  min-width: 240px;
+}
+
+.search-bar input {
+  min-width: 0;
 }
 
 .search-icon {
@@ -348,6 +356,7 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  flex-wrap: wrap;
   padding: 1.1rem 1.25rem;
   background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--stroke);
@@ -556,6 +565,12 @@ tbody tr:hover {
   background: rgba(244, 63, 94, 0.12);
   color: #f8b6c3;
   border-color: rgba(244, 63, 94, 0.4);
+}
+
+.alert-warning {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbd38d;
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 .auth {

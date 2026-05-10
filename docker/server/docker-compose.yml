@@ -28,6 +28,13 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg://${DB_USER:?DB_USER is required}:${DB_PASSWORD:?DB_PASSWORD is required}@postgres:5432/${DB_NAME:?DB_NAME is required}
       FLASK_SECRET_KEY: ${FLASK_SECRET_KEY:?FLASK_SECRET_KEY is required}
+      # JWT keys are mounted as Docker secrets, never baked into the image.
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt_private
+      JWT_PUBLIC_KEY_PATH: /run/secrets/jwt_public
+      COOKIE_SECURE: "true"
+    secrets:
+      - jwt_private
+      - jwt_public
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,3 +75,12 @@ services:
 volumes:
   postgres_data:
     driver: local
+
+# JWT keys are not stored in the image. The operator points each entry at the
+# real file location with a `.env` (e.g. JWT_PRIVATE_KEY=/etc/p5/private.pem)
+# or copies the keys next to this file before `docker compose up`.
+secrets:
+  jwt_private:
+    file: ${JWT_PRIVATE_KEY:-./secrets/private.pem}
+  jwt_public:
+    file: ${JWT_PUBLIC_KEY:-./secrets/public.pem}
