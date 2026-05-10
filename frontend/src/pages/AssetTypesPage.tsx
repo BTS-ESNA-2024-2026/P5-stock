@@ -169,7 +169,17 @@ export default function AssetTypesPage() {
             {loading ? 'Chargement...' : '↻ Actualiser'}
           </button>
           {editable && (
-            <button className="btn btn-primary btn-sm" onClick={openCreateTypeModal}>+ Nouveau type</button>
+            <>
+              <button className="btn btn-primary btn-sm" onClick={openCreateTypeModal}>+ Nouveau type</button>
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={openCreateSpecModal}
+                disabled={assetTypes.length === 0}
+                title={assetTypes.length === 0 ? 'Creez un type d\'abord' : ''}
+              >
+                + Nouvelle spec
+              </button>
+            </>
           )}
         </div>
       </section>
