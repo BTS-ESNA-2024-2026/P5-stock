@@ -183,7 +183,7 @@ class Asset(db.Model):  # noqa: F811
     mission: Mapped[Optional["Mission"]] = relationship(back_populates="assets")
     room: Mapped[Optional["Room"]] = relationship(back_populates="assets")
     values: Mapped[List["Value"]] = relationship(back_populates="asset")
-    logs: Mapped[List["Log"]] = relationship(back_populates="asset")
+    # logs: Mapped[List["Log"]] = relationship(back_populates="asset")
 
 
 class Spec(db.Model):  # noqa: F811
@@ -205,7 +205,7 @@ class Spec(db.Model):  # noqa: F811
     # Relationships
     asset_type: Mapped["AssetType"] = relationship(back_populates="specs")
     values: Mapped[List["Value"]] = relationship(back_populates="spec")
-    logs: Mapped[List["Log"]] = relationship(back_populates="spec")
+    # logs: Mapped[List["Log"]] = relationship(back_populates="spec")
 
 
 class Value(db.Model):  # noqa: F811
@@ -232,7 +232,7 @@ class Value(db.Model):  # noqa: F811
     # Relationships
     asset: Mapped["Asset"] = relationship(back_populates="values")
     spec: Mapped["Spec"] = relationship(back_populates="values")
-    logs: Mapped[List["Log"]] = relationship(back_populates="value")
+    # logs: Mapped[List["Log"]] = relationship(back_populates="value")
 
 
 class LogAdmin(db.Model):  # noqa: F811
@@ -263,14 +263,23 @@ class Log(db.Model):  # noqa: F811
     __tablename__ = "log"
 
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True, default=uuid7)
+    # asset_id: Mapped[Optional[UUID]] = mapped_column(
+    #     Uuid, ForeignKey("asset.id"), nullable=True
+    # )
+    # spec_id: Mapped[Optional[UUID]] = mapped_column(
+    #     Uuid, ForeignKey("spec.id"), nullable=True
+    # )
+    # value_id: Mapped[Optional[UUID]] = mapped_column(
+    #     Uuid, ForeignKey("value.id"), nullable=True
+    # )
     asset_id: Mapped[Optional[UUID]] = mapped_column(
-        Uuid, ForeignKey("asset.id"), nullable=True
+        Uuid, nullable=True
     )
     spec_id: Mapped[Optional[UUID]] = mapped_column(
-        Uuid, ForeignKey("spec.id"), nullable=True
+        Uuid, nullable=True
     )
     value_id: Mapped[Optional[UUID]] = mapped_column(
-        Uuid, ForeignKey("value.id"), nullable=True
+        Uuid, nullable=True
     )
     D: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     action: Mapped[str] = mapped_column(
@@ -283,9 +292,9 @@ class Log(db.Model):  # noqa: F811
     )
 
     # Relationships
-    asset: Mapped[Optional["Asset"]] = relationship(back_populates="logs")
-    spec: Mapped[Optional["Spec"]] = relationship(back_populates="logs")
-    value: Mapped[Optional["Value"]] = relationship(back_populates="logs")
+    # asset: Mapped[Optional["Asset"]] = relationship(back_populates="logs")
+    # spec: Mapped[Optional["Spec"]] = relationship(back_populates="logs")
+    # value: Mapped[Optional["Value"]] = relationship(back_populates="logs")
 
 
 class LogMission(db.Model):  # noqa: F811
