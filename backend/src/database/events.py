@@ -265,24 +265,10 @@ def _mission_after_delete(mapper, connection, target):
 # LOG PROTECTION  (prevents update/delete on log tables)
 # ============================================================================
 
-_LOG_FK_COLS = {'asset_id', 'spec_id', 'value_id', 'user_id', 'mission_id'}
-
-
-def _prevent_delete(mapper, connection, target):
+def _prevent_modify(mapper, connection, target):
     raise RuntimeError('Interdit: les logs ne peuvent pas etre modifies ou supprimes')
 
 
-def _prevent_update(mapper, connection, target):
-    state = inspect(target)
-    for attr in state.attrs:
-        hist = attr.history
-        if not hist.has_changes():
-            continue
-        if attr.key in _LOG_FK_COLS and getattr(target, attr.key) is None:
-            continue
-        raise RuntimeError('Interdit: les logs ne peuvent pas etre modifies ou supprimes')
-
-
 for _cls in (Log, LogAdmin, LogMission):
-    event.listen(_cls, 'before_delete', _prevent_delete)
-    event.listen(_cls, 'before_update', _prevent_update)
+    event.listen(_cls, 'before_delete', _prevent_modify)
+    event.listen(_cls, 'before_update', _prevent_modify)
