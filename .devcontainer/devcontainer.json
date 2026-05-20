@@ -20,7 +20,8 @@
 				"ms-python.debugpy",
 				"charliermarsh.ruff",
 				"dbaeumer.vscode-eslint",
-				"esbenp.prettier-vscode"
+				"esbenp.prettier-vscode",
+				"vitest.explorer"
 			],
 			"settings": {
 				"python.linting.enabled": true,

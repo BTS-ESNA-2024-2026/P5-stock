@@ -52,7 +52,7 @@ describe('BasesPage – rendering', () => {
   it('shows the page title', async () => {
     setupMocks()
     renderPage()
-    await waitFor(() => expect(screen.getAllByText('Bases').length).toBeGreaterThan(0))
+    await waitFor(() => expect(screen.getAllByText(/Bases\s*&\s*Salles/i).length).toBeGreaterThan(0))
   })
 
   it('lists bases after load', async () => {
@@ -63,8 +63,10 @@ describe('BasesPage – rendering', () => {
       ],
     })
     renderPage()
-    await waitFor(() => expect(screen.getByText('Base Alpha')).toBeInTheDocument())
-    expect(screen.getByText('Base Bravo')).toBeInTheDocument()
+    // Base names appear in both the table and the rooms-table base-filter
+    // dropdown options, so use getAllByText for the assertion.
+    await waitFor(() => expect(screen.getAllByText('Base Alpha').length).toBeGreaterThan(0))
+    expect(screen.getAllByText('Base Bravo').length).toBeGreaterThan(0)
     expect(screen.getByText('Paris')).toBeInTheDocument()
   })
 
@@ -76,8 +78,8 @@ describe('BasesPage – rendering', () => {
       ],
     })
     renderPage()
-    await waitFor(() => screen.getByText('Base Alpha'))
-    expect(screen.getByText('2')).toBeInTheDocument()
+    await waitFor(() => screen.getAllByText('Base Alpha'))
+    expect(screen.getAllByText('2').length).toBeGreaterThan(0)
   })
 })
 
@@ -89,7 +91,7 @@ describe('BasesPage – viewer role', () => {
   it('does not show create button for viewer', async () => {
     setupMocks({ role: 'viewer' })
     renderPage()
-    await waitFor(() => screen.getByText('Base Alpha'))
+    await waitFor(() => screen.getAllByText('Base Alpha'))
     // The button (not modal h3) should not be present for viewers
     expect(screen.queryByRole('button', { name: /\+ nouvelle base/i })).not.toBeInTheDocument()
   })
@@ -97,7 +99,7 @@ describe('BasesPage – viewer role', () => {
   it('does not show Edit buttons for viewer', async () => {
     setupMocks({ role: 'viewer' })
     renderPage()
-    await waitFor(() => screen.getByText('Base Alpha'))
+    await waitFor(() => screen.getAllByText('Base Alpha'))
     expect(screen.queryByText(/edit/i)).not.toBeInTheDocument()
   })
 })
@@ -126,7 +128,7 @@ describe('BasesPage – technician role', () => {
   it('shows Edit buttons for technician', async () => {
     setupMocks({ role: 'technician' })
     renderPage()
-    await waitFor(() => screen.getByText('Base Alpha'))
+    await waitFor(() => screen.getAllByText('Base Alpha'))
     expect(screen.getAllByText(/edit/i).length).toBeGreaterThan(0)
   })
 })
@@ -144,14 +146,16 @@ describe('BasesPage – search', () => {
       ],
     })
     renderPage()
-    await waitFor(() => screen.getByText('Base Alpha'))
+    await waitFor(() => screen.getAllByText('Base Alpha'))
 
-    const input = screen.getByPlaceholderText(/rechercher une base/i)
-    fireEvent.change(input, { target: { value: 'bravo' } })
+    const inputs = screen.getAllByPlaceholderText(/rechercher une base/i)
+    fireEvent.change(inputs[0], { target: { value: 'bravo' } })
 
     await waitFor(() => {
-      expect(screen.queryByText('Base Alpha')).not.toBeInTheDocument()
-      expect(screen.getByText('Base Bravo')).toBeInTheDocument()
+      // After search, "Base Alpha" stays only in the rooms-table base filter
+      // dropdown options (1 occurrence), but is gone from the bases table.
+      expect(screen.getAllByText('Base Alpha').length).toBe(1)
+      expect(screen.getAllByText('Base Bravo').length).toBeGreaterThan(0)
     })
   })
 
@@ -163,14 +167,14 @@ describe('BasesPage – search', () => {
       ],
     })
     renderPage()
-    await waitFor(() => screen.getByText('Base Alpha'))
+    await waitFor(() => screen.getAllByText('Base Alpha'))
 
-    const input = screen.getByPlaceholderText(/rechercher une base/i)
-    fireEvent.change(input, { target: { value: 'marseille' } })
+    const inputs = screen.getAllByPlaceholderText(/rechercher une base/i)
+    fireEvent.change(inputs[0], { target: { value: 'marseille' } })
 
     await waitFor(() => {
-      expect(screen.queryByText('Base Alpha')).not.toBeInTheDocument()
-      expect(screen.getByText('Base Bravo')).toBeInTheDocument()
+      expect(screen.getAllByText('Base Alpha').length).toBe(1)
+      expect(screen.getAllByText('Base Bravo').length).toBeGreaterThan(0)
     })
   })
 })

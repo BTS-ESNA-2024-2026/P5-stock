@@ -87,79 +87,28 @@ class TestLogin:
 # ---------------------------------------------------------------------------
 
 class TestRegister:
-    def test_register_success(self, client, seed_test_db):
-        """Valid new user can register and receives 201."""
-        resp = client.post(
-            "/auth/register",
-            json={"username": "newuser42", "password": "SecurePass!99"},
-        )
-        assert resp.status_code == 201
-        assert "created" in resp.get_json()["message"].lower()
+    """Self-registration is intentionally disabled (UC-02 says only admins
+    create accounts, via POST /api/user). The endpoint must return 410 Gone
+    regardless of payload to keep historic links explicit, not silent."""
 
-    def test_register_duplicate_username(self, client, seed_test_db):
-        """Registering an already-existing username returns 401."""
+    def test_register_disabled(self, client):
         resp = client.post(
             "/auth/register",
-            json={"username": ADMIN_USERNAME, "password": "SomePass!1"},
+            json={"username": "newuser42", "password": "SecurePass!9999"},
         )
-        assert resp.status_code == 401
-        assert "exists" in resp.get_json()["message"].lower()
+        assert resp.status_code == 410
+        assert "disabled" in resp.get_json()["message"].lower()
 
-    def test_register_missing_username(self, client):
-        """Missing username returns 401."""
-        resp = client.post(
-            "/auth/register",
-            json={"password": "SomePass!1"},
-        )
-        assert resp.status_code == 401
+    def test_register_disabled_even_with_no_body(self, client):
+        resp = client.post("/auth/register")
+        assert resp.status_code == 410
 
-    def test_register_missing_password(self, client):
-        """Missing password returns 401."""
+    def test_register_disabled_with_existing_username(self, client, seed_test_db):
         resp = client.post(
             "/auth/register",
-            json={"username": "validuser"},
+            json={"username": ADMIN_USERNAME, "password": "SomePass!1234"},
         )
-        assert resp.status_code == 401
-
-    def test_register_forbidden_username_admin(self, client):
-        """'admin' is a forbidden username."""
-        resp = client.post(
-            "/auth/register",
-            json={"username": "admin", "password": "SomePass!1"},
-        )
-        assert resp.status_code == 401
-
-    def test_register_forbidden_username_root(self, client):
-        """'root' is a forbidden username."""
-        resp = client.post(
-            "/auth/register",
-            json={"username": "root", "password": "SomePass!1"},
-        )
-        assert resp.status_code == 401
-
-    def test_register_invalid_username_special_chars(self, client):
-        """Username with forbidden special characters returns 401."""
-        resp = client.post(
-            "/auth/register",
-            json={"username": "bad user!", "password": "SomePass!1"},
-        )
-        assert resp.status_code == 401
-
-    def test_register_too_short_username(self, client):
-        """Single-character username is too short."""
-        resp = client.post(
-            "/auth/register",
-            json={"username": "a", "password": "SomePass!1"},
-        )
-        assert resp.status_code == 401
-
-    def test_register_with_name(self, client, seed_test_db):
-        """Optional 'name' field is accepted during registration."""
-        resp = client.post(
-            "/auth/register",
-            json={"username": "nameduser", "password": "SecurePass!99", "name": "John Doe"},
-        )
-        assert resp.status_code == 201
+        assert resp.status_code == 410
 
 
 # ---------------------------------------------------------------------------

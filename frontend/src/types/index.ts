@@ -96,6 +96,7 @@ export interface User {
   DA: string
   DE: string
   role_name?: string
+  MFA?: boolean
 }
 
 export interface Role {
@@ -104,21 +105,39 @@ export interface Role {
   desc?: string
 }
 
+export interface UserPerms {
+  manage_admins?: boolean
+  admin_panel?: boolean
+  sensible_access?: boolean
+  edit_assets?: boolean
+  view_assets?: boolean
+}
+
 export interface CurrentUser {
   id: string
   username: string
   name?: string
   role: string
+  perms?: UserPerms
   active: boolean
+  MFA?: boolean
 }
+
+export type LogKind = 'asset' | 'mission' | 'admin'
 
 export interface LogEntry {
   id: string
-  asset_id?: string
-  spec_id?: string
-  value_id?: string
   D: string
   action: string
   description?: string
+  log_type?: LogKind
+  // present for asset logs
+  asset_id?: string
   asset_name?: string
+  spec_id?: string
+  value_id?: string
+  // present for mission/admin logs
+  mission_id?: string
+  user_id?: string
+  entity_name?: string
 }

@@ -1,30 +1,39 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import AppLayout from '../layouts/AppLayout'
-import { fetchAssets, fetchAssetTypes, fetchRooms, fetchSpecs, createAsset, updateAsset, deleteAsset, fetchAssetValues, createValue, updateValue, deleteValue } from '../api/assets'
+import { fetchAssets, fetchAssetTypes, fetchRooms, fetchSpecs, createAsset, updateAsset, deleteAsset, fetchAssetValues, fetchAllValues, createValue, updateValue, deleteValue } from '../api/assets'
+import { fetchMissions } from '../api/missions'
 import { useAuth } from '../context/AuthContext'
-import type { Asset, AssetType, Room, AssetStatus, Spec, Value } from '../types'
+import type { Asset, AssetType, Room, AssetStatus, Spec, Value, Mission } from '../types'
 import { ASSET_STATUS_LABELS, ASSET_STATUS_BADGE } from '../types'
 
 const ALL_STATUSES: AssetStatus[] = ['STOCK', 'DESTROYED', 'SOLD', 'LOST', 'TRANSIT', 'PURCHASED']
 const ROLE_HIERARCHY = ['viewer', 'user', 'secure_user', 'technician', 'admin']
 function canEdit(role: string | undefined) {
-  return ROLE_HIERARCHY.indexOf(role ?? '') >= ROLE_HIERARCHY.indexOf('technician')
+  return ROLE_HIERARCHY.indexOf(role ?? '') >= ROLE_HIERARCHY.indexOf('user')
 }
 
 export default function AssetsPage() {
   const { user } = useAuth()
   const editable = canEdit(user?.role)
+  const canSensible = Boolean(user?.perms?.sensible_access)
 
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [sensibleFilter, setSensibleFilter] = useState<'' | 'yes' | 'no'>('')
+  const [missionFilter, setMissionFilter] = useState<string>('') // '' / 'none' / 'any' / mission-uuid
+  const [specFilter, setSpecFilter] = useState('')
+  const [specValueFilter, setSpecValueFilter] = useState('')
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [assets, setAssets] = useState<Asset[]>([])
   const [assetTypes, setAssetTypes] = useState<AssetType[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [specs, setSpecs] = useState<Spec[]>([])
+  const [allValues, setAllValues] = useState<Value[]>([])
+  const [missions, setMissions] = useState<Mission[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -39,6 +48,7 @@ export default function AssetsPage() {
   const [valueSpecId, setValueSpecId] = useState('')
   const [savingValue, setSavingValue] = useState(false)
   const [valueError, setValueError] = useState('')
+  const [valueSearch, setValueSearch] = useState('')
 
   const [form, setForm] = useState({
     type_asset_id: '',
@@ -46,6 +56,7 @@ export default function AssetsPage() {
     number: '',
     status: 'STOCK' as AssetStatus,
     room_id: '',
+    mission_id: '',
     quantity: '',
     shelf: '',
     sensible: false,
@@ -54,11 +65,15 @@ export default function AssetsPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [a, t, r, s] = await Promise.all([fetchAssets(), fetchAssetTypes(), fetchRooms(), fetchSpecs()])
+      const [a, t, r, s, m, v] = await Promise.all([
+        fetchAssets(), fetchAssetTypes(), fetchRooms(), fetchSpecs(), fetchMissions(), fetchAllValues(),
+      ])
       setAssets(a)
       setAssetTypes(t)
       setRooms(r)
       setSpecs(s)
+      setMissions(m)
+      setAllValues(v)
     } catch {
       setError('Erreur de chargement')
     } finally {
@@ -68,19 +83,63 @@ export default function AssetsPage() {
 
   useEffect(() => { loadData() }, [loadData])
 
+  // Index values by asset for quick lookup in the row-expansion sub-row and the
+  // spec/value filter.
+  const valuesByAsset = useMemo(() => {
+    const map = new Map<string, Value[]>()
+    allValues.forEach((v) => {
+      const list = map.get(v.asset_id) ?? []
+      list.push(v)
+      map.set(v.asset_id, list)
+    })
+    return map
+  }, [allValues])
+
+  // Specs available for selection in the spec/value filter — limited to the
+  // currently selected asset type (if any) so the dropdown stays focused.
+  const filterSpecs = useMemo(() => {
+    return typeFilter
+      ? specs.filter((s) => s.type_id === typeFilter)
+      : specs
+  }, [specs, typeFilter])
+
   const filteredAssets = useMemo(() => {
+    const valueNeedle = specValueFilter.trim().toLowerCase()
     return assets.filter((asset) => {
-      const text = `${asset.number ?? ''} ${asset.name} ${asset.room_name ?? ''} ${asset.type_name ?? ''}`.toLowerCase()
+      const text = `${asset.number ?? ''} ${asset.name} ${asset.room_name ?? ''} ${asset.type_name ?? ''} ${asset.mission_title ?? ''}`.toLowerCase()
       const matchSearch = text.includes(search.toLowerCase())
       const matchType = typeFilter ? asset.type_asset_id === typeFilter : true
       const matchStatus = statusFilter ? asset.status === statusFilter : true
-      return matchSearch && matchType && matchStatus
+      const matchSensible = sensibleFilter === '' ? true
+        : sensibleFilter === 'yes' ? asset.sensible === true
+        : !asset.sensible
+      const matchMission = missionFilter === '' ? true
+        : missionFilter === 'none' ? !asset.mission_id
+        : missionFilter === 'any' ? Boolean(asset.mission_id)
+        : asset.mission_id === missionFilter
+      let matchSpec = true
+      if (specFilter || valueNeedle) {
+        const vals = valuesByAsset.get(asset.id) ?? []
+        const candidates = specFilter ? vals.filter((v) => v.spec_id === specFilter) : vals
+        if (specFilter && candidates.length === 0) matchSpec = false
+        else if (valueNeedle) matchSpec = candidates.some((v) => v.value.toLowerCase().includes(valueNeedle))
+      }
+      return matchSearch && matchType && matchStatus && matchSensible && matchMission && matchSpec
     })
-  }, [assets, search, statusFilter, typeFilter])
+  }, [assets, search, statusFilter, typeFilter, sensibleFilter, missionFilter, specFilter, specValueFilter, valuesByAsset])
+
+  const toggleExpand = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const openCreateModal = () => {
     setEditingId(null)
-    setForm({ type_asset_id: '', name: '', number: '', status: 'STOCK', room_id: '', quantity: '', shelf: '', sensible: false })
+    setForm({ type_asset_id: '', name: '', number: '', status: 'STOCK', room_id: '', mission_id: '', quantity: '', shelf: '', sensible: false })
     setError('')
     setShowModal(true)
   }
@@ -93,6 +152,7 @@ export default function AssetsPage() {
       number: asset.number ?? '',
       status: asset.status,
       room_id: asset.room_id ?? '',
+      mission_id: asset.mission_id ?? '',
       quantity: asset.quantity?.toString() ?? '',
       shelf: asset.shelf ?? '',
       sensible: asset.sensible ?? false,
@@ -112,7 +172,8 @@ export default function AssetsPage() {
       status: form.status,
     }
     if (form.number) payload.number = form.number
-    if (form.room_id) payload.room_id = form.room_id
+    payload.room_id = form.room_id || null
+    payload.mission_id = form.mission_id || null
     if (form.quantity) payload.quantity = parseInt(form.quantity, 10)
     if (form.shelf) payload.shelf = form.shelf
     payload.sensible = form.sensible
@@ -149,6 +210,7 @@ export default function AssetsPage() {
     setEditingValueId(null)
     setValueForm('')
     setValueSpecId('')
+    setValueSearch('')
     setShowValuesModal(true)
     try {
       setAssetValues(await fetchAssetValues(asset.id))
@@ -180,6 +242,12 @@ export default function AssetsPage() {
     setValueError('')
   }
 
+  const refreshValues = async (assetId: string) => {
+    setAssetValues(await fetchAssetValues(assetId))
+    // Keep the page-wide cache (used by filters and expandable rows) in sync.
+    setAllValues(await fetchAllValues())
+  }
+
   const saveValue = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!valuesAsset) return
@@ -191,7 +259,7 @@ export default function AssetsPage() {
       } else {
         await createValue({ asset_id: valuesAsset.id, spec_id: valueSpecId, value: valueForm })
       }
-      setAssetValues(await fetchAssetValues(valuesAsset.id))
+      await refreshValues(valuesAsset.id)
       cancelValueEdit()
     } catch (err) {
       setValueError(err instanceof Error ? err.message : 'Erreur')
@@ -205,7 +273,7 @@ export default function AssetsPage() {
     if (!valuesAsset) return
     try {
       await deleteValue(id)
-      setAssetValues(await fetchAssetValues(valuesAsset.id))
+      await refreshValues(valuesAsset.id)
     } catch (err) {
       setValueError(err instanceof Error ? err.message : 'Erreur de suppression')
     }
@@ -226,9 +294,11 @@ export default function AssetsPage() {
         </div>
         <div className="controls-row">
           <button className="btn btn-secondary btn-sm" onClick={loadData} disabled={loading}>
-            {loading ? 'Chargement...' : '&#8635; Actualiser'}
+            {loading ? 'Chargement...' : '↻ Actualiser'}
           </button>
-          <button className="btn btn-primary btn-sm" onClick={openCreateModal}>+ Nouvel asset</button>
+          {editable && (
+            <button className="btn btn-primary btn-sm" onClick={openCreateModal}>+ Nouvel asset</button>
+          )}
         </div>
       </section>
 
@@ -261,6 +331,53 @@ export default function AssetsPage() {
               <option key={s} value={s}>{ASSET_STATUS_LABELS[s]}</option>
             ))}
           </select>
+          {canSensible && (
+            <select
+              className="form-select"
+              value={sensibleFilter}
+              onChange={(e) => setSensibleFilter(e.target.value as '' | 'yes' | 'no')}
+              aria-label="Filtre sensible"
+            >
+              <option value="">Sensible : tous</option>
+              <option value="yes">Sensibles uniquement</option>
+              <option value="no">Non sensibles</option>
+            </select>
+          )}
+          <select
+            className="form-select"
+            value={missionFilter}
+            onChange={(e) => setMissionFilter(e.target.value)}
+            aria-label="Filtre mission"
+          >
+            <option value="">Mission : toutes</option>
+            <option value="none">Sans mission</option>
+            <option value="any">En mission</option>
+            {missions.map((m) => (
+              <option key={m.id} value={m.id}>{m.title}</option>
+            ))}
+          </select>
+          <select
+            className="form-select"
+            value={specFilter}
+            onChange={(e) => { setSpecFilter(e.target.value); setSpecValueFilter('') }}
+            aria-label="Filtre par spec"
+          >
+            <option value="">Spec : toutes</option>
+            {filterSpecs.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}{s.type_name ? ` (${s.type_name})` : ''}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            className="form-input"
+            placeholder={specFilter ? 'Valeur contient...' : 'Valeur (toutes specs)'}
+            aria-label="Filtre valeur de spec"
+            value={specValueFilter}
+            onChange={(e) => setSpecValueFilter(e.target.value)}
+            style={{ minWidth: '180px' }}
+          />
         </div>
       </section>
 
@@ -272,38 +389,92 @@ export default function AssetsPage() {
         <table>
           <thead>
             <tr>
+              <th style={{ width: '2rem' }}></th>
               <th>Numero</th>
               <th>Nom</th>
               <th>Type</th>
               <th>Statut</th>
               <th>Localisation</th>
+              <th>Mission</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-center">Chargement...</td></tr>
+              <tr><td colSpan={8} className="text-center">Chargement...</td></tr>
             ) : filteredAssets.length === 0 ? (
-              <tr><td colSpan={6} className="text-center">Aucun asset correspondant.</td></tr>
+              <tr><td colSpan={8} className="text-center">Aucun asset correspondant.</td></tr>
             ) : (
-              filteredAssets.map((asset) => (
-                <tr key={asset.id}>
-                  <td>{asset.number ?? '—'}</td>
-                  <td>{asset.name}</td>
-                  <td>{asset.type_name ?? '—'}</td>
-                  <td>
-                    <span className={`badge ${ASSET_STATUS_BADGE[asset.status]}`}>
-                      {ASSET_STATUS_LABELS[asset.status]}
-                    </span>
-                  </td>
-                  <td>{asset.room_name ?? '—'}{asset.base_name ? ` (${asset.base_name})` : ''}</td>
-                  <td className="flex gap-1">
-                    <button className="btn btn-sm btn-secondary" onClick={() => openValuesModal(asset)}>Specs</button>
-                    <button className="btn btn-sm btn-secondary" onClick={() => openEditModal(asset)}>Edit</button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(asset.id)}>Supprimer</button>
-                  </td>
-                </tr>
-              ))
+              filteredAssets.map((asset) => {
+                const isExpanded = expanded.has(asset.id)
+                const assetSpecs = specs.filter((s) => s.type_id === asset.type_asset_id)
+                const assetValues = valuesByAsset.get(asset.id) ?? []
+                return (
+                  <Fragment key={asset.id}>
+                    <tr>
+                      <td>
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => toggleExpand(asset.id)}
+                          aria-label={isExpanded ? 'Replier' : 'Deplier'}
+                          aria-expanded={isExpanded}
+                          style={{ minWidth: '2rem', padding: '0.25rem 0.5rem' }}
+                        >
+                          {isExpanded ? '▾' : '▸'}
+                        </button>
+                      </td>
+                      <td>{asset.number ?? '—'}</td>
+                      <td>{asset.name}</td>
+                      <td>{asset.type_name ?? '—'}</td>
+                      <td>
+                        <span className={`badge ${ASSET_STATUS_BADGE[asset.status]}`}>
+                          {ASSET_STATUS_LABELS[asset.status]}
+                        </span>
+                        {asset.sensible ? <span className="badge badge-danger" style={{ marginLeft: '0.25rem' }}>SENSIBLE</span> : null}
+                      </td>
+                      <td>{asset.room_name ?? '—'}{asset.base_name ? ` (${asset.base_name})` : ''}</td>
+                      <td>{asset.mission_title ?? '—'}</td>
+                      <td className="flex gap-1">
+                        <button className="btn btn-sm btn-secondary" onClick={() => openValuesModal(asset)}>Specs</button>
+                        {editable && (
+                          <>
+                            <button className="btn btn-sm btn-secondary" onClick={() => openEditModal(asset)}>Edit</button>
+                            <button className="btn btn-sm btn-danger" onClick={() => handleDelete(asset.id)}>Supprimer</button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr>
+                        <td></td>
+                        <td colSpan={7}>
+                          {assetSpecs.length === 0 ? (
+                            <span className="subtitle">Aucune spec definie pour ce type d'asset.</span>
+                          ) : (
+                            <table style={{ marginBottom: 0 }}>
+                              <thead>
+                                <tr><th>Spec</th><th>Valeur</th></tr>
+                              </thead>
+                              <tbody>
+                                {assetSpecs.map((spec) => {
+                                  const v = assetValues.find((av) => av.spec_id === spec.id)
+                                  return (
+                                    <tr key={spec.id}>
+                                      <td>{spec.name}</td>
+                                      <td>{v ? v.value : <span style={{ opacity: 0.4 }}>—</span>}</td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                )
+              })
             )}
           </tbody>
         </table>
@@ -383,6 +554,20 @@ export default function AssetsPage() {
             </div>
 
             <div className="form-group">
+              <label className="form-label">Mission</label>
+              <select
+                className="form-select"
+                value={form.mission_id}
+                onChange={(e) => setForm((p) => ({ ...p, mission_id: e.target.value }))}
+              >
+                <option value="">Aucune</option>
+                {missions.map((m) => (
+                  <option key={m.id} value={m.id}>{m.title}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
               <label className="form-label">Quantite</label>
               <input
                 type="number"
@@ -402,6 +587,19 @@ export default function AssetsPage() {
                 onChange={(e) => setForm((p) => ({ ...p, shelf: e.target.value }))}
               />
             </div>
+
+            {canSensible && (
+              <div className="form-group">
+                <label className="flex gap-1" style={{ alignItems: 'center' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.sensible}
+                    onChange={(e) => setForm((p) => ({ ...p, sensible: e.target.checked }))}
+                  />
+                  <span>Materiel sensible (acces restreint)</span>
+                </label>
+              </div>
+            )}
 
             <div className="flex gap-2">
               <button type="submit" className="btn btn-primary flex-grow" disabled={saving}>
@@ -430,16 +628,41 @@ export default function AssetsPage() {
               Aucune spec definie pour ce type d'asset. Ajoutez-en depuis la page <strong>Types</strong>.
             </div>
           ) : (
-            <table style={{ marginBottom: '1rem' }}>
-              <thead>
-                <tr>
-                  <th>Spec</th>
-                  <th>Valeur</th>
-                  {editable && <th>Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {specsForAsset.map((spec) => {
+            <>
+              <div className="search-bar search-compact" style={{ marginBottom: '0.75rem' }}>
+                <span className="search-icon">&#9776;</span>
+                <input
+                  type="text"
+                  placeholder="Rechercher une spec ou une valeur"
+                  aria-label="Rechercher dans les specs"
+                  value={valueSearch}
+                  onChange={(e) => setValueSearch(e.target.value)}
+                />
+              </div>
+              <table style={{ marginBottom: '1rem' }}>
+                <thead>
+                  <tr>
+                    <th>Spec</th>
+                    <th>Valeur</th>
+                    {editable && <th>Actions</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const needle = valueSearch.trim().toLowerCase()
+                    const visible = needle
+                      ? specsForAsset.filter((s) => {
+                          const v = assetValues.find((av) => av.spec_id === s.id)
+                          return s.name.toLowerCase().includes(needle)
+                            || (v?.value.toLowerCase().includes(needle) ?? false)
+                        })
+                      : specsForAsset
+                    if (visible.length === 0) {
+                      return (
+                        <tr><td colSpan={editable ? 3 : 2} className="text-center">Aucune correspondance.</td></tr>
+                      )
+                    }
+                    return visible.map((spec) => {
                   const existing = assetValues.find((v) => v.spec_id === spec.id)
                   const isEditing = (editingValueId === (existing?.id ?? null) || (valueSpecId === spec.id && !editingValueId && !existing)) && (editingValueId !== null || valueSpecId === spec.id)
 
@@ -483,9 +706,11 @@ export default function AssetsPage() {
                       {editable && isEditing && <td />}
                     </tr>
                   )
-                })}
-              </tbody>
-            </table>
+                  })
+                  })()}
+                </tbody>
+              </table>
+            </>
           )}
 
           <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => { setShowValuesModal(false); cancelValueEdit() }}>

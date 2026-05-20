@@ -1,19 +1,25 @@
 import os
 from datetime import UTC, datetime, timedelta
-from uuid import UUID
 
 import jwt
 import pyotp
 from flask import Blueprint, jsonify, make_response, redirect, request
 from loguru import logger
 
-from src.database.model import User, db, ph
+from src.database.model import db
 from src.services.config import limiter
-from src.services.tools import get_user_by_username, jwt_decode, validate_username, verify_password
+from src.services.crypto import JWT_ALGORITHM, JWT_AUDIENCE, JWT_ISSUER, get_private_key
+from src.services.tools import (
+    get_user_by_username,
+    jwt_decode,
+    verify_password,
+)
 
 auth_blueprint = Blueprint("auth", __name__, url_prefix="/auth")
 
-VIEWER_ROLE_ID = UUID('019563a0-0000-7000-8000-000000000005')
+# Cookies marked Secure are dropped by browsers over plain HTTP except on
+# localhost. Allow disabling for development behind a non-HTTPS reverse proxy.
+COOKIE_SECURE = os.getenv('COOKIE_SECURE', 'true').lower() != 'false'
 
 @auth_blueprint.get("/login")
 def get_login():
@@ -36,6 +42,12 @@ def post_login():
                 'message': 'Username or password incorrect',
             }), 401
 
+        if not user.active:
+            logger.info(f"Login refused: account {user.id} is disabled")
+            return jsonify({
+                'message': 'Compte desactive, contactez un administrateur',
+            }), 403
+
         if user.MFA:
             if not otp_code:
                 return jsonify({'message': 'OTP code required'}), 401
@@ -43,73 +55,45 @@ def post_login():
             if not totp.verify(otp_code, valid_window=1):
                 return jsonify({'message': 'Invalid OTP code'}), 401
 
+        now = datetime.now(UTC)
         access_payload = {
-                'user_id': str(user.id),
-                'exp': datetime.now(UTC) + timedelta(minutes=age),
-                'iat': datetime.now(UTC),
-                'type': 'access'
-            }
-        private_key = open('private.pem', 'rb').read()
-        access_token = jwt.encode(access_payload, private_key, algorithm='RS256')
+            'user_id': str(user.id),
+            'exp': now + timedelta(minutes=age),
+            'iat': now,
+            'iss': JWT_ISSUER,
+            'aud': JWT_AUDIENCE,
+            'type': 'access',
+        }
+        access_token = jwt.encode(access_payload, get_private_key(), algorithm=JWT_ALGORITHM)
         response = make_response(jsonify({
                 'message': 'Login successful',
             }), 200)
         response.set_cookie(
                 'access_token',
                 access_token,
-                httponly=True,  # Prevent XSS
-                secure=True,  # HTTPS only (ANSSI required)
-                samesite='Strict',  # CSRF protection (ANSSI required)
-                max_age=age * 60,  # 10 minutes
-                path='/'  # Explicit path
+                httponly=True,        # Prevent XSS reading the token
+                secure=COOKIE_SECURE, # HTTPS only in production
+                samesite='Strict',    # CSRF protection (ANSSI required)
+                max_age=age * 60,
+                path='/',
             )
         logger.info(f"{user.id} logged in")
         return response
-    except Exception as e:
-        logger.error(f"{e}")
+    except Exception:
+        logger.exception("Unhandled error during login")
         return jsonify({
             'message': 'Internal server error',
         }), 500
 
+
+# Self-registration is disabled: per UC-02 user management is admin-only and
+# accounts are provisioned through `POST /api/user`. Leaving this endpoint as
+# 410 Gone makes the lockdown explicit if someone calls the historic URL.
 @auth_blueprint.post("/register")
 def post_register():
-    username = request.json.get('username')
-    name = request.json.get('name')
-    password = request.json.get('password')
-
-    user = get_user_by_username(username)
-    if not username or not password:
-        return make_response(jsonify({
-            'message': 'Username and password are needed'
-        }), 401)
-    if user :
-        return make_response(jsonify({
-            'message': 'User already exists'
-        }), 401)
-    if not validate_username(username):
-        return make_response(jsonify({
-            'message': 'Username needs to be alphanumeric'
-        }),401)
-    try:
-        user = User(
-            group_id=VIEWER_ROLE_ID,
-            username=username,
-            name = name if name else None,
-            hash=ph.hash(password),
-            hash_algorithm = "argon2",
-        )
-        db.session.add(user)
-        db.session.commit()
-        logger.info(f"New user created : {user.id}")
-        return jsonify({
-            'message': 'Account created successfully'
-        }), 201
-
-    except Exception as e:
-        logger.error(e)
-        return jsonify({
-            'message': 'Internal Server Error',
-        }), 500
+    return jsonify({
+        'message': 'Self-registration is disabled. Contact an administrator.',
+    }), 410
 
 
 @auth_blueprint.get("/me")
@@ -122,7 +106,9 @@ def get_me():
         'username': user.username,
         'name': user.name,
         'role': user.role.name if user.role else None,
+        'perms': (user.role.perms if user.role and user.role.perms else {}),
         'active': user.active,
+        'MFA': bool(user.MFA),
     }), 200
 
 
@@ -135,17 +121,50 @@ def post_logout():
 
 @auth_blueprint.post("/otp/setup")
 def post_otp_setup():
+    """Generate a candidate TOTP secret. The secret is NOT persisted until the
+    caller proves possession of the seed by submitting a valid 6-digit code to
+    /otp/verify. This prevents a user from being locked out if they never
+    finish enrolling their authenticator app."""
     user = jwt_decode(request)
     if not user:
         return jsonify({'error': 'Not authenticated'}), 401
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
     uri = totp.provisioning_uri(name=user.username, issuer_name="SGLM")
+    return jsonify({
+        'secret': secret,
+        'uri': uri,
+        'algorithm': 'SHA1',
+        'digits': 6,
+        'period': 30,
+        'type': 'TOTP',
+        'issuer': 'SGLM',
+    }), 200
+
+
+@auth_blueprint.post("/otp/verify")
+def post_otp_verify():
+    """Confirm a candidate secret by validating a 6-digit code against it,
+    then persist it on the user. Body: {secret, otp_code}."""
+    user = jwt_decode(request)
+    if not user:
+        return jsonify({'error': 'Not authenticated'}), 401
+    data = request.json or {}
+    secret = data.get('secret')
+    otp_code = data.get('otp_code')
+    if not secret or not otp_code:
+        return jsonify({'message': 'secret and otp_code are required'}), 400
+    try:
+        totp = pyotp.TOTP(secret)
+    except Exception:
+        return jsonify({'message': 'Invalid secret format'}), 400
+    if not totp.verify(otp_code, valid_window=1):
+        return jsonify({'message': 'Invalid OTP code'}), 401
     user.MFA = secret
     user.DE = datetime.now(UTC)
     db.session.commit()
-    logger.info(f"OTP setup for user {user.id}")
-    return jsonify({'secret': secret, 'uri': uri}), 200
+    logger.info(f"OTP enabled for user {user.id}")
+    return jsonify({'message': 'OTP enabled'}), 200
 
 
 @auth_blueprint.delete("/otp/setup")

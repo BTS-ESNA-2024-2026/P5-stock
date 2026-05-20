@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from sqlalchemy import text
 
+from src.database import events  # noqa: F401  (registers SQLAlchemy audit-log listeners)
 from src.database.config import Config
 from src.database.init_db import SEED_SQL
 from src.database.model import db, migrate
