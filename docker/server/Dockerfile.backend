@@ -1,5 +1,5 @@
 # Backend Dockerfile - Flask with Gunicorn
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 LABEL maintainer="P5 Stock Team"
 
